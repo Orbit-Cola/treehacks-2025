@@ -2,17 +2,16 @@ import dash
 from dash import html, Output, Input, callback
 import dash_bootstrap_components as dbc
 
-from components.conjunction_screening import ConjunctionScreening
-from components.space_viewer import SpaceViewer
-import style
+from cola_dash.components.conjunction_screening import ConjunctionScreening
+from cola_dash.components.ground_track import GroundTrack
+from cola_dash.components.space_viewer import SpaceViewer
+import cola_dash.style as style
 
 dash.register_page(__name__)
 
 conjunction_screening = ConjunctionScreening()
+ground_track = GroundTrack()
 space_viewer = SpaceViewer()
-
-conjunction_screening.register_callbacks()
-space_viewer.register_callbacks()
 
 tabs = dbc.Tabs(
     id="tabs",
@@ -20,8 +19,11 @@ tabs = dbc.Tabs(
     children=[
         dbc.Tab(label="Space Viewer", tab_id="tab-1"),
         dbc.Tab(label="Conjunction Screening", tab_id="tab-2"),
+        dbc.Tab(label="Ground Track", tab_id="tab-3"),
     ],
     style=style.DASH_1,
+    persistence=True,
+    persistence_type='local',
 )
 
 @callback(
@@ -34,8 +36,11 @@ def render_content(tab):
         return space_viewer.content
     elif tab == "tab-2":
         return conjunction_screening.content
+    elif tab == "tab-3":
+        return ground_track.content
     
 layout = [
     tabs,
+    html.Hr(),
     html.Div(id="tab-content", className="p-4"),
 ]

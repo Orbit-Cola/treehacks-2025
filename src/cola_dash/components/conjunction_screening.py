@@ -1,42 +1,89 @@
 from dash import dcc, html, Output, Input, callback
-import pandas as pd
-import plotly.express as px
+import dash_bootstrap_components as dbc
+import numpy as np
+import plotly.graph_objects as go
+from scipy.spatial.transform import Rotation as R
 
-import style
-
-CSV_PATH = "https://raw.githubusercontent.com/plotly/datasets/master/gapminder_unfiltered.csv"
+import cola_dash.style as style
 
 class ConjunctionScreening:
     """Conjunction Screening page view."""
 
     def __init__(self):
-        self.df = pd.read_csv(CSV_PATH)
         self.content = html.Div([
-            html.H1(
+            html.H2(
                 children="Conjunction Screening",
                 style=style.HEADING_2,
             ),
             html.Div([
                 dcc.Dropdown(
-                    self.df.country.unique(),
-                    "Canada",
                     id="dropdown-selection",
                 ),
             ], style=style.DASH_1),
             html.Div([
-                dcc.Graph(
-                    id="conjunction-screening",
-                ),
+                dbc.Spinner([
+                    dcc.Graph(
+                        id="conjunction-geometry",
+                        style={"height": "75vh"},
+                    ),
+                ]),
             ], style=style.DASH_1),
         ])
+
+        # Register callbacks on initialization
+        self.register_callbacks()
 
     def register_callbacks(self):
         """Register the callbacks for this class."""
         @callback(
-            Output("conjunction-screening", "figure"),
+            Output("conjunction-geometry", "figure"),
             Input("dropdown-selection", "value")
         )
         def update_graph(value):
             """Update graph."""
-            dff = self.df[self.df.country==value]
-            return px.line(dff, x="year", y="pop", template="plotly_dark")
+            # TODO: Make real covariance ellipsoids
+            a = 2  # Semi-axis along x
+            b = 3  # Semi-axis along y
+            c = 4  # Semi-axis along z
+
+            # Create the grid of points
+            u = np.linspace(0, 2 * np.pi, 100)
+            v = np.linspace(0, np.pi, 100)
+            x = a * np.outer(np.cos(u), np.sin(v))
+            y = b * np.outer(np.sin(u), np.sin(v))
+            z = c * np.outer(np.ones_like(u), np.cos(v))
+
+            primary = go.Surface(
+                x=x,
+                y=y,
+                z=z,
+                opacity=0.5,
+                colorscale=[[0, "green"], [1, "green"]],
+                showlegend=True,
+                showscale=False,
+                name="Primary"
+            )
+            secondary = go.Surface(
+                x=y + b,
+                y=z + c,
+                z=x + a,
+                opacity=0.25,
+                colorscale=[[0, "red"], [1, "red"]],
+                showlegend=True,
+                showscale=False,
+                name="Secondary"
+            )
+
+            fig = go.Figure(data=[primary, secondary])
+            fig.update_layout(
+                template="plotly_dark",
+                title='Conjunction Geometry',
+                yaxis=dict(scaleanchor="x", scaleratio=1),
+                scene=dict(
+                    xaxis_title='Radial [km]',
+                    yaxis_title='In-Track [km]',
+                    zaxis_title='Cross-Track [km]',
+                    aspectmode='auto'
+                )
+            )
+            return fig

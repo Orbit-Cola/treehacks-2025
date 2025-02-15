@@ -18,9 +18,9 @@ HEADING_2 = {
 
 FOOTER = {
     "bottom": "0px",
-    "margin-top": "50px",
-    "margin-bottom": "50px",
-    "margin-left": "50px",
+    "margin-top": "15px",
+    "margin-bottom": "15px",
+    "margin-left": "15px",
     "position": "fixed",
 }
 

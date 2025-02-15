@@ -1,1 +1,0 @@
-PASSWORD = "AUQyR3@P"

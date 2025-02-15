@@ -15,5 +15,7 @@ dependencies:
       - astropy
       - dash
       - dash_bootstrap_components
+      - mysql-connector-python
       - sgp4
+      - sshtunnel
       - configsparser

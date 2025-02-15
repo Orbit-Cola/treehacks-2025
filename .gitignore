@@ -1,5 +1,5 @@
-# SpaceTrack SGP4
-src/SpaceTrack_Sgp4/Sgp4Prop/
+# Don't push credentials
+credentials.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -11,7 +11,7 @@ layout = dbc.Container([
             style={"text-align": "center"}
         ),
         html.Div([
-            dbc.Button("Orbit Cola Dashboard", href="/dashboard", size="lg"),
+            dbc.Button("Launch Dashboard", href="/dashboard", size="lg"),
         ], style={"display": "flex", "justify-content": "center"}),
     ], justify="center", align="center", className="h-50"),
 ], style={"height": "100vh"})

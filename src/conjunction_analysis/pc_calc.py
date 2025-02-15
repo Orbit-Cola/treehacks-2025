@@ -10,7 +10,7 @@ from numpy import linalg as LA
 def norm_vector(v):
     norm = LA.norm(v)
     if norm == 0:
-        return 0
+        return v*0
     else:
         return v / norm
     
@@ -25,11 +25,9 @@ class satellite():
 class calcPC():
 
     def __init__(self, sat1, sat2):
-        d, C, r_sp = self.get2DParams(sat1, sat2)
-        Pc = self.integratePC(d, C, r_sp)
-        return Pc
+        d, C, r_sp = self.get2DParams(sat1=sat1, sat2=sat2)
+        self.Pc = self.integratePC(d, C, r_sp)
 
-    @staticmethod
     def get2DParams(self, sat1, sat2):
         # Get key values
         d = sat1.size + sat2.size
@@ -44,7 +42,8 @@ class calcPC():
         z_hat = np.cross(x_hat, y_hat)
 
         # Construct 3D intertial to conjunction matrix
-        V = np.hstack((x_hat, y_hat, z_hat))
+        V = np.vstack((x_hat, y_hat, z_hat))
+        # TODO: Add check if V is nonsingular
         R = V @ LA.inv(V)
 
         # Convert values to covariance matrix form
@@ -52,26 +51,27 @@ class calcPC():
         eigenvalues, eigenvectors = LA.eig(C3D_conj)
 
         # Project 3D covariance into 2D conjunction plane
-        ux_hat = np.array([1, 0, 0])
-        uy_hat = np.array([0, 1, 0])
         v1, v2, v3 = [eigenvalues[0]*eigenvectors[:,0], eigenvalues[1]*eigenvectors[:,1], eigenvalues[2]*eigenvectors[:,2]]
-        x1, y1 = self.project_onto_basis(v1, ux_hat, uy_hat)
-        x2, y2 = self.project_onto_basis(v2, ux_hat, uy_hat)
-        x3, y3 = self.project_onto_basis(v3, ux_hat, uy_hat)
-        V, Lambda = self.get_2D_eigenmats(x1, y1, x2, y2, x3, y3)
+        p1 = self.project_onto_basis(v1)
+        p2 = self.project_onto_basis(v2)
+        p3 = self.project_onto_basis(v3)
+        V, Lambda = self.get_2D_eigenmats(p1, p2, p3)
 
         C = V @ Lambda @ LA.inv(V)
 
         return d, C, r_sp
     
     @staticmethod
-    def project_onto_basis(a, x, y):
-        return [np.dot(a,x)*x, np.dot(a,y)*y]
+    def project_onto_basis(v):
+        uz = np.array([0, 0, 1])
+        v_perp = np.dot(v, uz) * uz
+        v_plane = v - v_perp
+        return v_plane[:-1]
 
     @staticmethod
-    def get_2D_eigenmats(x1, y1, x2, y2, x3, y3):
-        x = [x1, x2, x3]
-        y = [y1, y2, y3]
+    def get_2D_eigenmats(p1, p2, p3):
+        x = [p1[0], p2[0], p3[0]]
+        y = [p1[1], p2[1], p3[1]]
         indZero = -1
         for i in range(3):
             if np.sqrt(x[i]**2 + y[i]**2) < 1e-6:
@@ -97,7 +97,7 @@ class calcPC():
         rp = np.sqrt(2/(eta+zeta))
         ang = 2*np.pi - theta
         V = np.array([[np.cos(ang), np.sin(ang)],[-np.sin(ang), np.cos(ang)]])
-        Lambda = np.diag(ra, rp)
+        Lambda = np.diag([ra, rp])
         return V, Lambda
 
 
@@ -106,4 +106,4 @@ class calcPC():
         f = lambda x, y: np.exp(-0.5 * ((np.array([x, y]) - r_sp).T @ LA.inv(C) @ (np.array([x, y]) - r_sp)))
         int = integrate.dblquad(f, -d, d, lambda x: -np.sqrt(d**2 - x), lambda x: np.sqrt(d**2 - x))
         norm = 1 / (2*np.pi*np.sqrt(LA.det(C)))
-        return norm*int
+        return norm*int[0]

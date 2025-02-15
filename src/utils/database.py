@@ -1,0 +1,56 @@
+import mysql.connector
+import sshtunnel
+
+from credentials import *
+
+########
+# HOW-TO:
+# import database
+# conn = database.create_conn()
+# cursor = conn.cursor()
+# tle = database.get_tle_data(cursor)
+# tle: list(tuple(satcat: str, tle: str))
+########
+
+def create_conn():
+    tunnel = sshtunnel.SSHTunnelForwarder(
+        ('ssh.pythonanywhere.com', 22),
+        ssh_username=USERNAME, ssh_password=PA_PASSWORD,
+        remote_bind_address=(DB_HOSTNAME, 3306)
+    )
+    tunnel.start()
+    conn = mysql.connector.connect(
+        user=USERNAME,
+        password=DB_PASSWORD,
+        host="127.0.0.1",
+        port=tunnel.local_bind_port,
+        database=DB_NAME,
+        use_pure=True,
+    )
+    return conn
+
+def latest_tle_upload_timestamp(cursor):
+    select_timestamp = "SELECT * FROM tle_upload"
+    cursor.execute(select_timestamp)
+    return cursor.fetchall()
+
+def upload_tle_data(cursor, tle_data):
+    # Data should be list of tuple(satcat: str, tle: str)
+    insert_tle = "INSERT INTO tle(satcat, tle) VALUES(%s, %s)"
+    cursor.execute(insert_tle, tle_data)
+
+def upload_propagation_data(cursor, propagation_data):
+    # Data should be list of tuple(satcat: str, apogee_km: float, perigee_km: float, data: str (serialized JSON))
+    insert_propagation = "INSERT INTO propagation(satcat, apogee_km, perigee_km, data) VALUES(%s, %f, %f, %s)"
+    cursor.execute(insert_propagation, propagation_data)
+
+def get_tle_data(cursor):
+    # Data should be list of tuple(satcat: str, tle: str)
+    select_tle = "SELECT * FROM tle"
+    cursor.execute(select_tle)
+    return cursor.fetchall()
+
+def get_propagation_data(cursor):
+    select_propagation = "SELECT * FROM propagation"
+    cursor.execute(select_propagation)
+    return cursor.fetchall()

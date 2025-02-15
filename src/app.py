@@ -2,9 +2,15 @@ import dash
 from dash import Dash, html
 import dash_bootstrap_components as dbc
 
-import style
+import cola_dash.style as style
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY], use_pages=True, suppress_callback_exceptions=True)
+app = Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.VAPOR],
+    use_pages=True,
+    pages_folder="cola_dash/pages",
+    suppress_callback_exceptions=True
+)
 
 header = html.A(
     href="/",
@@ -15,7 +21,7 @@ header = html.A(
 )
 
 footer = html.Footer(
-    children="Thanks for using Orbit Cola!",
+    children="Thanks for checking out Orbit Cola!",
     style=style.FOOTER,
 )
 

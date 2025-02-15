@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 ##
 ## SLTrack.py
 ## (c) 2019 Andrew Stokes  All Rights Reserved
@@ -32,7 +34,7 @@ import configparser
 from datetime import datetime
 
 class MyError(Exception):
-    def __init__(self,args):
+    def __init__(self,*args):
         Exception.__init__(self,"my exception was raised with arguments {0}".format(args))
         self.args = args
 
@@ -44,7 +46,6 @@ uriBase                = "https://www.space-track.org"
 requestLogin           = "/ajaxauth/login"
 requestCmdAction       = "/basicspacedata/query" 
 requestFindLEOSats     = "/class/gp/period/%3C128/decay_date/null-val/format/3le"
-
 
 # Parameters to derive apoapsis and periapsis from mean motion (see https://en.wikipedia.org/wiki/Mean_motion)
 
@@ -82,6 +83,9 @@ with requests.Session() as session:
     resp = session.post(uriBase + requestLogin, data = siteCred)
     if resp.status_code != 200:
         raise MyError(resp, "POST fail on login")
+    
+    print("Login Response:", resp.text)
+
 
     # this query picks up all Starlink satellites from the catalog. Note - a 401 failure shows you have bad credentials 
     resp = session.get(uriBase + requestCmdAction + requestFindLEOSats)
