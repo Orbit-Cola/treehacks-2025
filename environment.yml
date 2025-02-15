@@ -8,8 +8,12 @@ dependencies:
   - pandas
   - pip
   - scipy
+  - requests
+  - glob
+  - os
   - pip:
       - astropy
       - dash
       - dash_bootstrap_components
       - sgp4
+      - configsparser
