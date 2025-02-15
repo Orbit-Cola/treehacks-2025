@@ -29,10 +29,10 @@ import requests
 import configparser
 # import xlsxwriter
 # import time
-# from datetime import datetime
+from datetime import datetime
 
 class MyError(Exception):
-    def __init___(self,args):
+    def __init__(self,args):
         Exception.__init__(self,"my exception was raised with arguments {0}".format(args))
         self.args = args
 

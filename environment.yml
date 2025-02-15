@@ -9,6 +9,8 @@ dependencies:
   - pip
   - scipy
   - requests
+  - glob
+  - os
   - pip:
       - astropy
       - dash
