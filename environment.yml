@@ -1,0 +1,15 @@
+name: orbit_cola
+channels:
+  - defaults
+dependencies:
+  - python=3.10
+  - matplotlib
+  - numpy
+  - pandas
+  - pip
+  - scipy
+  - pip:
+      - astropy
+      - dash
+      - dash_bootstrap_components
+      - sgp4
