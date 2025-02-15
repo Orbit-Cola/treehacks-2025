@@ -37,10 +37,5 @@ def render_content(tab):
     
 layout = [
     tabs,
-    dbc.Spinner(
-        [
-            html.Div(id="tab-content", className="p-4"),
-        ],
-        delay_show=100,
-    ),
+    html.Div(id="tab-content", className="p-4"),
 ]
