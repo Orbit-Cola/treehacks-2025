@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 import glob
 import os
+from src.utils import credentials as cred
 
 # GM = 398600441800000.0
 # GM13 = GM ** (1.0/3.0)
@@ -35,11 +36,9 @@ class stQueryClass():
         self.parseConfigFile()
 
     def parseConfigFile(self):
-        config = configparser.ConfigParser()
-        config.read("./" + self.configFile)
-        configUsr = config.get("configuration","username")
-        configPwd = config.get("configuration","password")
-        self.configOut = config.get("configuration","output")
+        configUsr = cred.USERNAME_ST
+        configPwd = cred.PASSWORD_ST
+        self.configOut = cred.OUTPUT_ST
         self.siteCred = {'identity': configUsr, 'password': configPwd}
 
     def readELSETFile(self, filepath):

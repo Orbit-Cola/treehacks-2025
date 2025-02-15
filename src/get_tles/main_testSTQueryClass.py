@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from stQueryClass import stQueryClass
+from src.get_tles.stQueryClass import stQueryClass
 
 
 if __name__ == "__main__":
