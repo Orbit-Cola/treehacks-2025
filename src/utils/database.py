@@ -1,7 +1,7 @@
 import mysql.connector
 import sshtunnel
 
-from credentials import *
+from src.utils.credentials import *
 
 ########
 # HOW-TO:
@@ -29,15 +29,14 @@ def create_conn():
     )
     return conn
 
-def latest_tle_upload_timestamp(cursor):
-    select_timestamp = "SELECT * FROM tle_upload"
-    cursor.execute(select_timestamp)
-    return cursor.fetchall()
-
 def upload_tle_data(cursor, tle_data):
     # Data should be list of tuple(satcat: str, tle: str)
     insert_tle = "INSERT INTO tle(satcat, tle) VALUES(%s, %s)"
     cursor.execute(insert_tle, tle_data)
+
+def upload_tle_upload_timestamp(cursor, timestamp):
+    insert_timestamp = f"INSERT INTO tle_upload(timestamp) VALUES({timestamp})"
+    cursor.execute(insert_timestamp)
 
 def upload_propagation_data(cursor, propagation_data):
     # Data should be list of tuple(satcat: str, apogee_km: float, perigee_km: float, data: str (serialized JSON))
@@ -48,6 +47,11 @@ def get_tle_data(cursor):
     # Data should be list of tuple(satcat: str, tle: str)
     select_tle = "SELECT * FROM tle"
     cursor.execute(select_tle)
+    return cursor.fetchall()
+
+def get_latest_tle_upload_timestamp(cursor):
+    select_timestamp = "SELECT * FROM tle_upload ORDER BY timestamp DESC LIMIT 1"
+    cursor.execute(select_timestamp)
     return cursor.fetchall()
 
 def get_propagation_data(cursor):

@@ -2,8 +2,8 @@ from dash import dcc, html, Output, Input, callback
 import dash_bootstrap_components as dbc
 import plotly.express as px
 
-import cola_dash.style as style
-import utils.orbits as orbits
+import src.cola_dash.style as style
+import src.utils.orbits as orbits
 
 LAND_COLOR = "#007000"
 WATER_COLOR = "#000070"

@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 import glob
 import os
+from src.utils import database as db
 from src.utils import credentials as cred
 
 # GM = 398600441800000.0
@@ -34,6 +35,11 @@ class stQueryClass():
         self.QUERY_COOLDOWN = QUERY_COOLDOWN
         self.latestELSET = None
         self.parseConfigFile()
+
+        onn = database.create_conn()
+        cursor = conn.cursor()
+        tle = database.get_tle_data(cursor)
+        tle: list(tuple(satcat: str, tle: str))
 
     def parseConfigFile(self):
         configUsr = cred.USERNAME_ST
