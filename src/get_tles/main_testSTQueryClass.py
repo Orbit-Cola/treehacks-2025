@@ -11,9 +11,9 @@ if __name__ == "__main__":
 
 
     outputPath = os.getcwd()
-    print(outputPath)
+    # print(outputPath)
     outputPath = os.path.join(outputPath, "src", "get_tles", "tleHistories")
-    print(outputPath)
+    # print(outputPath)
     stq = stQueryClass("SLTrack.ini", uriBase + requestLogin, uriBase + requestCmdAction + requestFindLEOSats, outputPath)
     # fileName = stq.get3LELocal()
     # print(fileName)
