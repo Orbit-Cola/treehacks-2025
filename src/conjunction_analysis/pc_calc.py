@@ -90,10 +90,13 @@ class calcPC():
                       [x[2]**2, y[2]**2, 2*x[2]*y[2]]])
         Constants = LA.inv(X) @ np.array([1, 1, 1])
         a, b, c = Constants
+        a = np.real(a)
+        b = np.real(b)
+        c = np.real(c)
         theta = 0.5*np.arctan2(2*c, b-a)
         eta = a + b
-        zeta = (b - a) / np.cos(2*theta)
-        ra = np.sqrt(2/(eta-zeta))
+        zeta = np.abs(b - a) / np.cos(2*theta)
+        ra = np.sqrt(2/np.abs(eta-zeta))
         rp = np.sqrt(2/(eta+zeta))
         ang = 2*np.pi - theta
         V = np.array([[np.cos(ang), np.sin(ang)],[-np.sin(ang), np.cos(ang)]])
@@ -104,6 +107,6 @@ class calcPC():
     @staticmethod
     def integratePC(d, C, r_sp):
         f = lambda x, y: np.exp(-0.5 * ((np.array([x, y]) - r_sp).T @ LA.inv(C) @ (np.array([x, y]) - r_sp)))
-        int = integrate.dblquad(f, -d, d, lambda x: -np.sqrt(d**2 - x), lambda x: np.sqrt(d**2 - x))
+        int = integrate.dblquad(f, -d, d, lambda x: -np.sqrt(d**2 - x**2), lambda x: np.sqrt(d**2 - x**2))
         norm = 1 / (2*np.pi*np.sqrt(LA.det(C)))
-        return norm*int[0]
+        return int[0]*norm

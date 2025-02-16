@@ -11,7 +11,6 @@ class RiskAnalyzer():
         risk_indices = self.find_close_pairs()
         self.concerns, self.Pcs = self.get_pcs(risk_indices)
 
-
     @staticmethod
     def find_close_pairs(self):
         tree = KDTree(self.positions)
