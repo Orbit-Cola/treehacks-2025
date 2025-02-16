@@ -45,6 +45,11 @@ def upload_propagation_data(cursor, propagation_data):
     insert_propagation = "INSERT INTO propagation(satcat, apogee_km, perigee_km, data) VALUES(%s, %f, %f, %s)"
     cursor.execute(insert_propagation, propagation_data)
 
+def upload_keplerian_data(cursor, keplerian_data):
+    cursor.execute("DELETE FROM keplerian")  # Delete all old records
+    insert_keplerian = "INSERT INTO keplerian(satcat, sma, ecc, inc, raan, om, stamp) VALUES(%s, %f, %f, %f, %f, %f, %s)"
+    cursor.execute(insert_keplerian, keplerian_data)
+
 def get_tle_data(cursor):
     # Data should be list of tuple(satcat: str, tle: str)
     select_tle = "SELECT * FROM tle"
@@ -59,4 +64,9 @@ def get_latest_tle_upload_timestamp(cursor):
 def get_propagation_data(cursor):
     select_propagation = "SELECT * FROM propagation"
     cursor.execute(select_propagation)
+    return cursor.fetchall()
+
+def get_keplerian_data(cursor, limit=1000):
+    select_keplerian = f"SELECT satcat, sma, ecc, inc, raan, om FROM keplerian ORDER BY stamp DESC LIMIT {limit}"
+    cursor.execute(select_keplerian)
     return cursor.fetchall()
