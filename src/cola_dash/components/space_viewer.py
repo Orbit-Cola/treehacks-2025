@@ -1,4 +1,4 @@
-from dash import dcc, html, Output, Input, Patch, callback
+from dash import dcc, html, Output, Input, Patch, callback, State
 import numpy as np
 from PIL import Image
 import plotly.graph_objects as go
@@ -67,7 +67,14 @@ class SpaceViewer:
                     persistence=True,
                     persistence_type='session',
                 )
-            ], style=style.DASH_1),               
+            ], style=style.DASH_1),
+            html.Button("Start Timelaps", id="toggle-button", n_clicks=0, style={**style.DASH_1, "backgroundColor": "#007BFF", "color": "white"}),
+            dcc.Store(id="animation-state", data={"running": False}),  # Store animation state
+            dcc.Interval(
+                id="interval-update",
+                interval=1000,  # Interval in milliseconds
+                n_intervals=0
+            ),          
             html.Div([
                 dcc.Graph(
                     id="space-viewer",
@@ -120,18 +127,36 @@ class SpaceViewer:
         )
     
     def register_callbacks(self):
-        """Register the callbacks for this class."""
         @callback(
-            Output("space-viewer", "figure"),
-            Input("space-slider", "value"),
+            Output("animation-state", "data"),
+            Output("interval-update", "disabled"),
+            Output("toggle-button", "children"),
+            Input("toggle-button", "n_clicks"),
+            State("animation-state", "data"),
         )
-        def update_graph(value):
-            """Create and update space viewer visualization."""
+        def toggle_animation(n_clicks, state):
+            """Toggle animation on/off when the button is clicked."""
+            running = not state["running"]  # Toggle state
+            button_text = "Stop Timelaps" if running else "Start Timelaps"
+            return {"running": running}, not running, button_text  # Update state and button text
+
+        @callback(
+            [Output("space-viewer", "figure"), Output("space-slider", "value")],
+            [Input("space-slider", "value"), Input("interval-update", "n_intervals")],
+            State("animation-state", "data"),
+        )
+        def update_graph(value, n_intervals, state):
+            """Update the space viewer when the slider moves or animation runs."""
+            if not state["running"]:  # Stop updates if animation is paused
+                return Patch(), value  
+
+            value = (value + 1) % len(PROPAGATOR_TIMESTEPS)  # Loop animation
 
             p = Patch()
             for idx, obj in enumerate(PROPAGATOR_DICT.values()):
                 r_eci = np.array(obj["position_eci_km"])
-                p["data"][idx + 1]['x'] = r_eci[value - 1, 0:1]
-                p["data"][idx + 1]['y'] = r_eci[value - 1, 1:2]
-                p["data"][idx + 1]['z'] = r_eci[value - 1, 2:3]
-            return p
+                p["data"][idx + 1]['x'] = r_eci[value, 0:1]
+                p["data"][idx + 1]['y'] = r_eci[value, 1:2]
+                p["data"][idx + 1]['z'] = r_eci[value, 2:3]
+
+            return p, value
