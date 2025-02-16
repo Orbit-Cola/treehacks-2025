@@ -106,7 +106,7 @@ class RiskAnalyzer():
                         size=sat_data["frontal_area_m2"],
                         pos=np.array(sat_data["position_eci_km"][self.ind]),
                         vel=np.array(sat_data["velocity_eci_km_s"][self.ind]),
-                        cov_rtn=np.array(sat_data["covariance_position_rtn"][self.ind]/1000))
+                        cov_rtn=np.array(sat_data["covariance_position_rtn"][self.ind])/1000)
         
         return sat
     
