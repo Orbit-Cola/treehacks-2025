@@ -4,10 +4,8 @@ import os
 import sys
 from scipy.spatial import KDTree
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-import src.utils.database as db
-from pc_calc import *
-import src.utils.database as db
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+# import src.utils.database as db
 from pc_calc import *
 from tolerances import *
 
@@ -21,15 +19,16 @@ class RiskAnalyzer():
     """
 
     def __init__(self):
-        conn = db.create_conn()
-        cursor = conn.cursor()
-        self.get_jsons(cursor)
+        # conn = db.create_conn()
+        # cursor = conn.cursor()
+        # self.get_jsons(cursor)
+        self.process_jsons()
         self.collision_checker()
         self.amongus_json = []
         self.create_jsons()
-        db.delete_conjunction_data(cursor=cursor)
-        db.upload_conjunction(cursor=cursor,
-                              conjunction_data=self.amongus_json)
+        # db.delete_conjunction_data(cursor=cursor)
+        # db.upload_conjunction(cursor=cursor,
+        #                       conjunction_data=self.amongus_json)
 
 
     def get_jsons(self,cursor):
@@ -51,6 +50,8 @@ class RiskAnalyzer():
 
         # positions = []
         self.sat_data = []
+        self.jsons = ["C:\\Users\\kusal\\Documents\\GitHub\\treehacks-2025\\src\\conjunction_analysis\\12.json",
+                      "C:\\Users\\kusal\\Documents\\GitHub\\treehacks-2025\\src\\conjunction_analysis\\12 - Copy.json"]
         for data in self.jsons:
             with open(data, "r") as f:
                 big_data = json.load(f)
@@ -105,7 +106,7 @@ class RiskAnalyzer():
                         size=sat_data["frontal_area_m2"],
                         pos=np.array(sat_data["position_eci_km"][self.ind]),
                         vel=np.array(sat_data["velocity_eci_km_s"][self.ind]),
-                        cov_rtn=np.array(sat_data["covariance_position_rtn"][self.ind]))
+                        cov_rtn=np.array(sat_data["covariance_position_rtn"][self.ind]/1000))
         
         return sat
     
