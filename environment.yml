@@ -14,5 +14,6 @@ dependencies:
       - dash
       - dash_bootstrap_components
       - mysql-connector-python
-      - sgp4
       - sshtunnel
+      - dsgp4
+      - torch

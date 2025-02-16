@@ -19,7 +19,7 @@ EARTH_COLORSCALE = [
     [1.0, "rgb(255, 255, 255)"],
 ]
 EARTH_IMAGE = Image.open("./src/cola_dash/assets/earth.jpeg")
-EARTH_TEXTURE = np.asarray(EARTH_IMAGE.resize((np.array(EARTH_IMAGE.size) / 4).astype(int), Image.LANCZOS)).T
+EARTH_TEXTURE = np.asarray(EARTH_IMAGE.resize((512, 256), Image.LANCZOS)).T
 
 class SpaceViewer:
     """Space Viewer page view with 3D orbit visualization and space safety statistics."""

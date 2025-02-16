@@ -3,7 +3,7 @@
 from src.get_tles.stQueryClass import stQueryClass
 import os
 
-if __name__ == "__main__":
+def main():
     uriBase                = "https://www.space-track.org"
     requestLogin           = "/ajaxauth/login"
     requestCmdAction       = "/basicspacedata/query" 
@@ -15,3 +15,6 @@ if __name__ == "__main__":
 
     stq.writeST2DB()
     stq.tle2keplerian()
+
+if __name__ == "__main__":
+    main()
