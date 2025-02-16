@@ -1,0 +1,22 @@
+import json
+
+import src.utils.database as database
+
+# Take advantage of interpreter caching. Only connect once.
+conn = database.create_conn()
+
+# Get propagator data
+raw_propagator_data = database.get_propagation_data(conn.cursor())
+if raw_propagator_data:
+    json_data = json.loads(raw_propagator_data[0][3])
+    PROPAGATOR_TIMESTEPS = len(json_data["position_eci_km"])
+else:
+    PROPAGATOR_TIMESTEPS = 0
+PROPAGATOR_DICT = {}
+for obj in raw_propagator_data:
+    json_data = json.loads(obj[3])
+    PROPAGATOR_DICT[json_data["name"]] = {
+        "satcat": obj[0],
+        # Ignoring altitudes for now
+        "json_data": json_data,
+    }

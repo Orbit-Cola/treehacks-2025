@@ -1,11 +1,10 @@
-from dash import dcc, html, Output, Input, callback
-import dash_bootstrap_components as dbc
+from dash import dcc, html, Output, Input, Patch, callback
 import numpy as np
 from PIL import Image
 import plotly.graph_objects as go
 
+from src.cola_dash.components.db_helper import PROPAGATOR_DICT, PROPAGATOR_TIMESTEPS
 import src.cola_dash.style as style
-import src.utils.orbits as orbits
 
 EARTH_COLORSCALE = [
     [0.0, "rgb(30, 59, 117)"],
@@ -40,6 +39,11 @@ class SpaceViewer:
                 zaxis=dict(showgrid=False, showticklabels=False, visible=False),
             ),
         )
+        self.init_idx = 1
+        for obj in PROPAGATOR_DICT.values():
+            name = obj["json_data"]["name"]
+            r_eci = np.array(obj["json_data"]["position_eci_km"])
+            self.fig.add_trace(self.plot_object(name, r_eci[:, 0], r_eci[:, 1], r_eci[:, 2], self.init_idx - 1))
 
         # Create layout
         self.content = html.Div([
@@ -48,20 +52,25 @@ class SpaceViewer:
                 style=style.HEADING_2,
             ),
             html.Div([
-                dcc.Dropdown(
-                    id="space-dropdown",
-                    options=["Satellite", "Rocket Body"],
-                    multi=True,
-                ),
+                # dcc.Dropdown(
+                #     id="space-dropdown",
+                #     options=["Satellite", "Rocket Body"],
+                #     multi=True,
+                # ),
+                dcc.Slider(
+                    min=1,
+                    max=PROPAGATOR_TIMESTEPS,
+                    step=1,
+                    value=self.init_idx,
+                    id="space-slider",
+                )
             ], style=style.DASH_1),               
             html.Div([
-                dbc.Spinner([
-                    dcc.Graph(
-                        id="space-viewer",
-                        figure=self.fig,
-                        style={"height": "75vh"},
-                    ),
-                ]),
+                dcc.Graph(
+                    id="space-viewer",
+                    figure=self.fig,
+                    style={"height": "75vh"},
+                ),
             ], style=style.DASH_1),
         ])
 
@@ -96,21 +105,31 @@ class SpaceViewer:
             line=dict(width=2),
             name=satcat
         )
+
+    def plot_object(self, name, x_eci, y_eci, z_eci, step):
+        return go.Scatter3d(
+            x=x_eci[step:step + 1],
+            y=y_eci[step:step + 1],
+            z=z_eci[step:step + 1],
+            mode="markers",
+            marker=dict(size=2),
+            name=name
+        )
     
     def register_callbacks(self):
         """Register the callbacks for this class."""
         @callback(
             Output("space-viewer", "figure"),
-            Input("space-dropdown", "value")
+            Input("space-slider", "value"),
+            prevent_initial_call=True,
         )
         def update_graph(value):
             """Create and update space viewer visualization."""
 
-            # Clear all data except for Earth
-            self.fig.data = self.fig.data[:1]
-
-            # TODO: Query data based on satcat
-            for i in range(1, 3):
-                ecef = orbits.keplerian2ecef(*orbits.random_keplerian())
-                self.fig.add_trace(self.plot_orbit(f"Satellite {i}", *ecef))
-            return self.fig
+            p = Patch()
+            for idx, obj in enumerate(PROPAGATOR_DICT.values()):
+                r_eci = np.array(obj["json_data"]["position_eci_km"])
+                p["data"][idx + 1]['x'] = r_eci[value - 1, 0:1]
+                p["data"][idx + 1]['y'] = r_eci[value - 1, 1:2]
+                p["data"][idx + 1]['z'] = r_eci[value - 1, 2:3]
+            return p
