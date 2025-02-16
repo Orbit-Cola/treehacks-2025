@@ -14,104 +14,7 @@ from dsgp4.util import days2mdhms
 import torch
 torch.set_default_dtype(torch.float32)
 import time
-# from src.get_tles.stQueryClass import stQueryClass
 import src.utils.database as database
-
-
-# class SatelliteCovariance():
-#     """
-#     Class to hold the satellite covariance matrix in different frames
-#     TODO accept covariances from different frames
-#     """
-#     def __init__(
-#             self,
-#             covRIC:np.ndarray,
-#             state:SatelliteState
-#     ):
-#         # Create class variables
-#         self.state = state              # The state of the object corresponding to the covariance matrix
-#         self.covRIC = covRIC            # Covariance matrix in RIC frame
-#         self.covICRS = np.zeros((6,6))  # Covariance matrix in ICRS frame
-#         self.covITRS = np.zeros((6,6))  # Covariance matrix in ITRS frame
-
-#         # Get covariance in ICRS and ITRS frame
-#         self._covariance_ric2icrs()
-#         self._covariance_ric2itrs()
-    
-#     def _covariance_ric2icrs(
-#             self,
-#     ):
-#         """
-#         Convert covariance matrix from RIC frame to ICRS frame
-#         """
-#         # Get the covariance matrix
-#         self.covICRS = self.state.ICRS2RIC.T @ self.covRIC @ self.state.ICRS2RIC
-    
-#     def _covariance_ric2itrs(
-#             self,
-#     ):
-#         """
-#         Convert covariance matrix from RIC frame to ITRS frame
-#         """
-#         # Get the covariance matrix
-#         self.covITRS = self.state.ITRS2RIC.T @ self.covRIC @ self.state.ITRS2RIC
-    
-#     def propagate_covariance(
-#             self,
-#             stm_icrs:np.ndarray,
-#             propagated_state:SatelliteState,
-#     ):
-#         """
-#         Given a state transition matrix (STM) in the ICRS frame and the propagated state, propagate
-#         the covariance matrix
-
-#         Parameters
-#         ----------
-#         stm_icrs: numpy.ndarray
-#             The STM in the ICRS frame
-#         propagated_state: SatelliteState
-#             The propagated state corresponding to the propagated covariance matrix
-
-#         Returns
-#         -------
-#         propagated_cov_obj: SatelliteCovariance
-#             The propagated covariance matrix
-#         """
-#         # Get new covariance matrix in ICRS
-#         propagated_covICRS = stm_icrs @ self.covICRS @ stm_icrs.T
-
-#         # Build new SatelliteCovariance object
-#         propagated_cov_obj = self.build_from_covICRS(covICRS=propagated_covICRS,state=propagated_state)
-
-#         return propagated_cov_obj
-    
-#     @staticmethod
-#     def build_from_covICRS(
-#         covICRS:np.ndarray,
-#         state:SatelliteState,
-#     ):
-#         """
-#         Build a SatelliteCovariance object from a covariance matrix in the ICRS frame
-
-#         Parameters
-#         ----------
-#         covICRS: numpy.ndarray
-#             The covariance matrix in the ICRS frame
-#         state: SatelliteState
-#             The state corresponding to the covariance matrix
-        
-#         Returns
-#         -------
-#         cov_obj: SatelliteCovariance
-#             The covariance object
-#         """
-#         # Convert ICRS to RIC
-#         covRIC = state.ICRS2RIC @ covICRS @ state.ICRS2RIC.T
-
-#         # Build new SatelliteCovariance object
-#         cov_obj = SatelliteCovariance(covRIC=covRIC,state=state)
-
-#         return cov_obj
 
 class BulkTLE:
     """
@@ -131,9 +34,13 @@ class BulkTLE:
         print("Starting Bulk Propagation Operations")
         print("--------------------------------------------------")
 
-        # Open text file and record all TLEs
+        # Global tle list
         self.tle_list = []
-        tle_list_init=dsgp4.tle.load_from_lines(tle_str_list)
+
+        # Open text file and record all TLEs
+        tle_list_init = [None]*len(tle_str_list)
+        for _i in range(len(tle_str_list)):
+            tle_list_init[_i]=dsgp4.tle.TLE(tle_str_list[_i])
 
         # Get rid of deepspace TLEs
         for _tle in tle_list_init:
@@ -182,6 +89,9 @@ class BulkTLE:
         # Report number of TLEs
         print("\nNumber of TLEs: " + str(len(self.tle_list)))
 
+        # json tuple
+        self.json_tuple = []
+
     def rotation_matrix(self,state):
         """
         Computes the UVW rotation matrix.
@@ -205,8 +115,7 @@ class BulkTLE:
         Converts a cartesian state to the RTN frame.
 
         Args:
-            state (`numpy.array`): numpy array of 2 rows and 3 columns, where
-                                        the first row represents position, and the second velocity.
+            state (`numpy.array`): numpy array of 2 rows and 3 columns, where the first row represents position, and the second velocity.
             cartesian_to_rtn_rotation_matrix (`numpy.array`): numpy array of the rotation matrix from the cartesian state. If None, it is computed.
 
         Returns:
@@ -239,8 +148,6 @@ class BulkTLE:
         tle_batch_list = []
         for _tle in self.tle_list:
             tle_batch_list+=[_tle]*len(times)
-
-        print(tle_batch_list)
         
         # Get timestamps in terms of time since epoch
         tsinces = []
@@ -267,38 +174,41 @@ class BulkTLE:
         cov_time_start = time.time()
         Cov_xyz=np.zeros((len(tle_batch_list),6,6))
         Cov_rtn_pos=np.zeros((len(tle_batch_list),3,3))
-        #this is the initial TLE covariance matrix:
-        Cov_tle=np.array([[ 1.06817079e-23,  8.85804989e-25,  1.51328946e-24,
-                -2.48167092e-13,  1.80784129e-11, -9.17516946e-17,
-                -1.80719145e-11,  2.47782854e-14,  1.06374440e-19],
-            [ 1.10888880e-26,  9.19571327e-28,  1.57097512e-27,
-                -2.57618033e-16,  1.87675528e-14, -9.28440729e-20,
-                -1.87608028e-14,  2.57219640e-17,  1.10539220e-22],
-            [-3.62208982e-24, -3.00370060e-25, -5.13145502e-25,
-                8.41515501e-14, -6.13025898e-12,  3.11161104e-17,
-                6.12805538e-12, -8.40212641e-15, -3.61913778e-20],
-            [-2.72347076e-13, -2.25849762e-14, -3.85837006e-14,
-                6.69613552e-03, -4.60858400e-01,  2.44529381e-06,
-                4.60848714e-01, -6.66633934e-04,  2.73554382e-10],
-            [ 1.98398791e-11,  1.64526723e-12,  2.81073778e-12,
-                -4.60858400e-01,  3.35783115e+01, -1.70385711e-04,
-                -3.35662070e+01,  4.60149046e-02,  1.68286334e-07],
-            [-1.00692291e-16, -8.34937429e-18, -1.42650203e-17,
-                2.44529381e-06, -1.70385711e-04,  1.75093676e-05,
-                1.70379140e-04, -2.42796071e-07, -2.62336921e-10],
-            [-1.98327475e-11, -1.64467582e-12, -2.80972744e-12,
-                4.60848714e-01, -3.35662070e+01,  1.70379140e-04,
-                3.35541747e+01, -4.60131157e-02, -2.28248504e-07],
-            [ 2.71925407e-14,  2.25500097e-15,  3.85239630e-15,
-                -6.66633934e-04,  4.60149046e-02, -2.42796071e-07,
-                -4.60131157e-02,  6.63783423e-05, -3.21657063e-12],
-            [ 1.16764843e-19,  9.73507662e-21,  1.65971417e-20,
-                2.73554368e-10,  1.68286335e-07, -2.62336921e-10,
-                -2.28248505e-07, -3.21656925e-12,  2.21029182e-07]])/1000.
+
+        # Initial TLE covariance matrix:
+        Cov_tle=np.array([
+        [   1.06817079e-23,  8.85804989e-25,  1.51328946e-24,
+            -2.48167092e-13,  1.80784129e-11, -9.17516946e-17,
+            -1.80719145e-11,  2.47782854e-14,  1.06374440e-19],
+        [   1.10888880e-26,  9.19571327e-28,  1.57097512e-27,
+            -2.57618033e-16,  1.87675528e-14, -9.28440729e-20,
+            -1.87608028e-14,  2.57219640e-17,  1.10539220e-22],
+        [   -3.62208982e-24, -3.00370060e-25, -5.13145502e-25,
+            8.41515501e-14, -6.13025898e-12,  3.11161104e-17,
+            6.12805538e-12, -8.40212641e-15, -3.61913778e-20],
+        [   -2.72347076e-13, -2.25849762e-14, -3.85837006e-14,
+            6.69613552e-03, -4.60858400e-01,  2.44529381e-06,
+            4.60848714e-01, -6.66633934e-04,  2.73554382e-10],
+        [   1.98398791e-11,  1.64526723e-12,  2.81073778e-12,
+            -4.60858400e-01,  3.35783115e+01, -1.70385711e-04,
+            -3.35662070e+01,  4.60149046e-02,  1.68286334e-07],
+        [   -1.00692291e-16, -8.34937429e-18, -1.42650203e-17,
+            2.44529381e-06, -1.70385711e-04,  1.75093676e-05,
+            1.70379140e-04, -2.42796071e-07, -2.62336921e-10],
+        [   -1.98327475e-11, -1.64467582e-12, -2.80972744e-12,
+            4.60848714e-01, -3.35662070e+01,  1.70379140e-04,
+            3.35541747e+01, -4.60131157e-02, -2.28248504e-07],
+        [   2.71925407e-14,  2.25500097e-15,  3.85239630e-15,
+            -6.66633934e-04,  4.60149046e-02, -2.42796071e-07,
+            -4.60131157e-02,  6.63783423e-05, -3.21657063e-12],
+        [   1.16764843e-19,  9.73507662e-21,  1.65971417e-20,
+            2.73554368e-10,  1.68286335e-07, -2.62336921e-10,
+            -2.28248505e-07, -3.21656925e-12,  2.21029182e-07]
+        ])/1000.
         frob_norms_pos=np.zeros((len(tle_batch_list),))
 
-        dx_dtle = torch.zeros((len(tsinces),6,9))
-        for k in range(len(tsinces)):
+        dx_dtle = torch.zeros((len(tle_batch_list),6,9))
+        for k in range(len(tle_batch_list)):
             for i in range(6):
                 tle_elements[k].grad=None
                 states_teme[k].flatten()[i].backward(retain_graph=True)
@@ -312,10 +222,8 @@ class BulkTLE:
             transformation_matrix_cartesian_to_rtn[3:,3:] = cartesian_to_rtn_rotation_matrix
 
             Cov_xyz[idx,:,:]=np.matmul(np.matmul(dx_dtle[idx,:],Cov_tle),dx_dtle[idx,:].T)
-            frob_norms_pos[idx]=np.linalg.norm(Cov_xyz[idx,:3,:3],ord='fro')
+            frob_norms_pos[idx]=np.linalg.norm(Cov_xyz[idx,:3,:3],ord='fro') # Only position
             Cov_rtn_pos[idx,:,:]=np.matmul(np.matmul(transformation_matrix_cartesian_to_rtn, Cov_xyz[idx,:,:]),transformation_matrix_cartesian_to_rtn.T)[:3,:3]
-            # TODO only position
-            # TODO 1 json each sat
         
         # Done propagating covariance
         cov_time_end = time.time()
@@ -331,7 +239,6 @@ class BulkTLE:
         # Run through all satellites
         for _i in range(len(self.tle_list)):
             # Current TLE
-            bulk_prop = []
             current_tle = self.tle_list[_i]
 
             # Get starting index for state vectors
@@ -369,7 +276,7 @@ class BulkTLE:
             max_height = np.max(height_arr.tolist())
             min_height = np.min(height_arr.tolist())
 
-            bulk_prop.append({
+            bulk_prop = {
                 "name": current_tle._lines[0][2:],
                 "Satellite catalog number": current_tle.satellite_catalog_number,
                 "Classification": current_tle.classification,
@@ -386,44 +293,47 @@ class BulkTLE:
                 "height_deg": height_arr.tolist(),
                 "covariance_position_rtn": Cov_rtn_pos[start_indx:(start_indx+len(times))].tolist(),
                 "cov_fro_norm": frob_norms_pos[start_indx:(start_indx+len(times))].tolist()
-            })
+            }
 
             # Save to json
             with open(json_dir + "/" + str(current_tle.satellite_catalog_number) + ".json", "w") as json_file:
                 json.dump(bulk_prop, json_file, indent=4)
-            write_time_end = time.time()
-            print("Finished in " + str(write_time_end-write_time_start) + " secs")
+        self.json_tuple.append((str(current_tle.satellite_catalog_number),0,0,json.dumps(bulk_prop, indent=4)))
+        write_time_end = time.time()
+        print("Finished in " + str(write_time_end-write_time_start) + " secs")
 
 if __name__ == "__main__":
-    # uriBase                = "https://www.space-track.org"
-    # requestLogin           = "/ajaxauth/login"
-    # requestCmdAction       = "/basicspacedata/query" 
-    # requestFindLEOSats     = "/class/gp/EPOCH/>now-30/MEAN_MOTION/>11.25/format/3le"
-
-    # stq = stQueryClass("SLTrack.ini", uriBase + requestLogin, uriBase + requestCmdAction + requestFindLEOSats)
-    # fileName = stq.get3LELocal()
+    PUSH_TO_DATABASE = True
 
     # Connect to remote database
     conn = database.create_conn()
     cursor = conn.cursor()
 
-    # Pull TLE data from database
+    # Pull TLE data from database and parse
     tle = database.get_tle_data(cursor)
-    tle_str_list = [t[1] for t in tle]
-    print(tle_str_list)
+    tle_str_list = [t[1].split("\n") for t in tle]
 
+    # Bulk import TLEs
     bulk = BulkTLE(
-        tle_str_list=tle_str_list#"src/get_tles/tleHistories/tleHistory_2025-02-15_16-08-15.txt"
+        tle_str_list=tle_str_list[-10:]
     )
-    prop_date1 = datetime(
-        year=2025,
-        month=2,
-        day=15,
-        hour=0,
-        minute=0,
-        second=0
-    )
+
+    # Set propagation times
+    start_time = datetime(year=2025,month=2,day=15,hour=20,minute=0,second=0)
+    datetime_list = [start_time + timedelta(minutes=i) for i in range(0,120,5)]
+
+    # Bulk propagate
     bulk.bulk_propagate(
-        times=[prop_date1],
+        times=datetime_list,
         json_dir="src/sgp4/sqp4_json"
     )
+
+    # If you want to push the propagated data to the database
+    if PUSH_TO_DATABASE:
+        print("Pushing Propagated Data to Database")
+        database.upload_propagation_data(
+            cursor=cursor,
+            propagation_data=bulk.json_tuple
+        )
+
+        conn.commit()

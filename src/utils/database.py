@@ -42,8 +42,8 @@ def upload_tle_upload_timestamp(cursor, stamp):
 def upload_propagation_data(cursor, propagation_data):
     # Data should be list of tuple(satcat: str, apogee_km: float, perigee_km: float, data: str (serialized JSON))
     cursor.execute("DELETE FROM propagation")  # Delete all old records
-    insert_propagation = "INSERT INTO propagation(satcat, apogee_km, perigee_km, data) VALUES(%s, %f, %f, %s)"
-    cursor.execute(insert_propagation, propagation_data)
+    insert_propagation = "INSERT INTO propagation(satcat, apogee_km, perigee_km, data) VALUES(%s, %s, %s, %s)"
+    cursor.executemany(insert_propagation, propagation_data)
 
 def upload_keplerian_data(cursor, keplerian_data):
     cursor.execute("DELETE FROM keplerian")  # Delete all old records
