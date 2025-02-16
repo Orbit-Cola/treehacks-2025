@@ -49,8 +49,8 @@ def upload_propagation_data(cursor, propagation_data):
 
 def upload_keplerian_data(cursor, keplerian_data):
     cursor.execute("DELETE FROM keplerian")  # Delete all old records
-    insert_keplerian = "INSERT INTO keplerian(satcat, sma, ecc, inc, raan, om, stamp) VALUES(%s, %f, %f, %f, %f, %f, %s)"
-    cursor.execute(insert_keplerian, keplerian_data)
+    insert_keplerian = "INSERT INTO keplerian(satcat, sma, ecc, inc, raan, om, stamp) VALUES(%s, %s, %s, %s, %s, %s, %s)"
+    cursor.executemany(insert_keplerian, keplerian_data)
 
 def get_tle_data(cursor):
     # Data should be list of tuple(satcat: str, tle: str)
