@@ -13,14 +13,14 @@ def norm_vector(v):
         return v*0
     else:
         return v / norm
-    
+
 class satellite():
-    def __init__(self, name):
-        # TODO: implement code to get the satellite information in a class format
-        self.size = ""
-        self.pos = ""
-        self.vel = ""
-        self.cov = ""
+    def __init__(self, id, size, pos, vel, cov):
+        self.id = id
+        self.size = size
+        self.pos = pos
+        self.vel = vel
+        self.cov = cov
 
 class calcPC():
 
@@ -42,7 +42,7 @@ class calcPC():
         z_hat = np.cross(x_hat, y_hat)
 
         # Construct 3D intertial to conjunction matrix
-        V = np.vstack((x_hat, y_hat, z_hat))
+        V = np.vstack((x_hat, y_hat, z_hat)).T
         # TODO: Add check if V is nonsingular
         R = V @ LA.inv(V)
 
@@ -95,7 +95,7 @@ class calcPC():
         c = np.real(c)
         theta = 0.5*np.arctan2(2*c, b-a)
         eta = a + b
-        zeta = np.abs(b - a) / np.cos(2*theta)
+        zeta = b - a / np.cos(2*theta)
         ra = np.sqrt(2/np.abs(eta-zeta))
         rp = np.sqrt(2/(eta+zeta))
         ang = 2*np.pi - theta
@@ -107,6 +107,6 @@ class calcPC():
     @staticmethod
     def integratePC(d, C, r_sp):
         f = lambda x, y: np.exp(-0.5 * ((np.array([x, y]) - r_sp).T @ LA.inv(C) @ (np.array([x, y]) - r_sp)))
-        int = integrate.dblquad(f, -d, d, lambda x: -np.sqrt(d**2 - x**2), lambda x: np.sqrt(d**2 - x**2))
+        integ = integrate.dblquad(f, -d, d, lambda x: -np.sqrt(d**2 - x**2), lambda x: np.sqrt(d**2 - x**2))
         norm = 1 / (2*np.pi*np.sqrt(LA.det(C)))
-        return int[0]*norm
+        return integ[0]*norm
