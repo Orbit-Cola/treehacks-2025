@@ -3,15 +3,17 @@ import requests
 import configparser
 # import xlsxwriter
 import time
-from datetime import datetime
+import dsgp4
+from dsgp4.util import days2mdhms
+from datetime import datetime, timedelta
 import glob
 import os
 from src.utils import database
 from src.utils import credentials as cred
 
-# GM = 398600441800000.0
+GM = 398600.441800000
 # GM13 = GM ** (1.0/3.0)
-# MRAD = 6378.137
+MRAD = 6378.137
 # PI = 3.14159265358979
 # TPI86 = 2.0 * PI / 86400.0
 
@@ -19,6 +21,19 @@ class MyError(Exception):
     def __init__(self,args):
         Exception.__init__(self,"my exception was raised with arguments {0}".format(args))
         self.args = args
+
+def epoch2time(epoch_year, epoch_day):
+    yy = int( epoch_year )
+    ddd = float( epoch_day )
+
+    base_date = datetime(yy, 1, 1)  # Start of the year
+    tle_datetime = base_date + timedelta(days=ddd - 1)  # Subtract 1 since Jan 1st is day 1
+    return tle_datetime.strftime("%Y-%m-%d %H:%M:%S")
+
+def meanMotion2SMA(n):
+    n = float( n )
+    n /= 60
+    return ( GM/(n**2) )**(1/3)
 
 class stQueryClass():
     def __init__(self, 
@@ -72,28 +87,15 @@ class stQueryClass():
         return resp.text
         
     def writeST2DB(self):
-        ## UNFINISHED ## 
         now = datetime.now()
         db_time = 0
 
         cursor = self.conn.cursor()
         db_timeList = database.get_latest_tle_upload_timestamp(cursor)
-        print(db_timeList)
+        # print(db_timeList)
 
         if not db_timeList or (now - db_timeList[0][0]).total_seconds() > self.QUERY_COOLDOWN:
             print("Cooldown has passed. Writing queried data to db")
-            # test = False
-            # if test:
-            #     file_pattern = self.configOut + "_*.txt"
-            #     files = glob.glob(os.path.join(self.outputPath, file_pattern))
-            #     if files:
-            #         latest_file = max(files, key=os.path.getctime) # Get most recently created file
-            #         latest_file_base = os.path.basename(latest_file)
-            #         print(f"Latest file found: {latest_file_base}")
-
-            #         # Extract timestamp from filename
-            #         tleStr = self.readELSETFile(latest_file)
-            # else:
             tleStr = self.querySpaceTrack()
 
             strList = tleStr.splitlines()
@@ -106,6 +108,22 @@ class stQueryClass():
             self.conn.commit()
         else:
             print("Recent db data exists. Skipping query.")
+
+    def tle2keplerian(self):
+
+        # now = datetime.now()
+        cursor = self.conn.cursor()
+        tleTupleList = database.get_tle_data(cursor)
+        tleStringList = [t[1] for t in tleTupleList]
+
+        tleList    = [ dsgp4.tle.TLE(s.splitlines()) for s in tleStringList ]
+
+        dbList = [( tle.satellite_catalog_number, meanMotion2SMA(tle._no_kozai), float(tle._ecco), float(tle._inclo), 
+                   float(tle._nodeo), float(tle._argpo), epoch2time(tle.epoch_year, float(tle.epoch_days)) ) for tle in tleList]
+
+        database.upload_keplerian_data(cursor, dbList)
+        self.conn.commit()
+        print("TLE converted to Keplerian elements")
 
 
     def get3LELocal(self):

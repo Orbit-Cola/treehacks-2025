@@ -4,9 +4,9 @@
     "Classification": "U",
     "International designator": "60009E",
     "epoch": "2025-02-15 08:59:15.964511",
-    "alt_max_km": 1696.7848727986366,
-    "alt_min_km": 1531.1048278385588,
-    "frontal_area_m2": 0.004817187345906859,
+    "alt_max_km": 1696.752431364144,
+    "alt_min_km": 1531.418096420577,
+    "frontal_area_m2": 1,
     "time_utc": [
         "2025-02-15 20:00:00",
         "2025-02-15 20:02:00",

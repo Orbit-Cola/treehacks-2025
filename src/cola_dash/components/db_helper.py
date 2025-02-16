@@ -16,3 +16,13 @@ PROPAGATOR_DICT = {}
 for obj in raw_propagator_data:
     json_data = json.loads(obj[3])
     PROPAGATOR_DICT[obj[0]] = json_data
+
+# Get conjunction data
+raw_conjunction_data = database.get_conjunctions_data(conn.cursor())
+if raw_conjunction_data:
+    json_data = json.loads(raw_conjunction_data[0][2])
+CONJUNCTION_DICT = {}
+for obj in raw_conjunction_data:
+    json_data = json.loads(obj[2])
+    CONJUNCTION_DICT[obj[0]] = json_data
+    
