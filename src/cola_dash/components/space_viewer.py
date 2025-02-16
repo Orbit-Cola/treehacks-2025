@@ -33,11 +33,11 @@ class SpaceViewer:
         self.fig.update_layout(
             template="plotly_dark",
             showlegend=False,
-            yaxis=dict(scaleanchor="x", scaleratio=1),
             scene=dict(
-                xaxis=dict(showgrid=False, showticklabels=False, visible=False),
-                yaxis=dict(showgrid=False, showticklabels=False, visible=False),
-                zaxis=dict(showgrid=False, showticklabels=False, visible=False),
+                aspectmode="cube",
+                xaxis=dict(showgrid=False, showticklabels=False, visible=False, range=[-1e4, 1e4]),
+                yaxis=dict(showgrid=False, showticklabels=False, visible=False, range=[-1e4, 1e4]),
+                zaxis=dict(showgrid=False, showticklabels=False, visible=False, range=[-1e4, 1e4]),
             ),
         )
         self.init_idx = 0
