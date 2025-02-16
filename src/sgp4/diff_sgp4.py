@@ -1,8 +1,8 @@
 import sys
 import os
 
-# Add the parent directory to the sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../src')))
+# Get the absolute path two levels up
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from astropy.coordinates import TEME, ITRS, GCRS, CartesianDifferential, CartesianRepresentation, EarthLocation
 import astropy.units as u
@@ -14,7 +14,7 @@ from dsgp4.util import days2mdhms
 import torch
 torch.set_default_dtype(torch.float32)
 import time
-from get_tles.stQueryClass import stQueryClass
+# from src.get_tles.stQueryClass import stQueryClass
 
 # class SatelliteCovariance():
 #     """
@@ -258,7 +258,7 @@ class BulkTLE:
         print("\nRunning TLE Covariance Propagation...")
         cov_time_start = time.time()
         Cov_xyz=np.zeros((len(tle_batch_list),6,6))
-        Cov_rtn=np.zeros((len(tle_batch_list),6,6))
+        Cov_rtn_pos=np.zeros((len(tle_batch_list),3,3))
         #this is the initial TLE covariance matrix:
         Cov_tle=np.array([[ 1.06817079e-23,  8.85804989e-25,  1.51328946e-24,
                 -2.48167092e-13,  1.80784129e-11, -9.17516946e-17,
@@ -287,7 +287,7 @@ class BulkTLE:
             [ 1.16764843e-19,  9.73507662e-21,  1.65971417e-20,
                 2.73554368e-10,  1.68286335e-07, -2.62336921e-10,
                 -2.28248505e-07, -3.21656925e-12,  2.21029182e-07]])/1000.
-        frob_norms=np.zeros((len(tle_batch_list),))
+        frob_norms_pos=np.zeros((len(tle_batch_list),))
 
         dx_dtle = torch.zeros((len(tsinces),6,9))
         for k in range(len(tsinces)):
@@ -304,8 +304,10 @@ class BulkTLE:
             transformation_matrix_cartesian_to_rtn[3:,3:] = cartesian_to_rtn_rotation_matrix
 
             Cov_xyz[idx,:,:]=np.matmul(np.matmul(dx_dtle[idx,:],Cov_tle),dx_dtle[idx,:].T)
-            frob_norms[idx]=np.linalg.norm(Cov_xyz[idx,:,:],ord='fro')
-            Cov_rtn[idx,:,:]=np.matmul(np.matmul(transformation_matrix_cartesian_to_rtn, Cov_xyz[idx,:,:]),transformation_matrix_cartesian_to_rtn.T)
+            frob_norms_pos[idx]=np.linalg.norm(Cov_xyz[idx,:3,:3],ord='fro')
+            Cov_rtn_pos[idx,:,:]=np.matmul(np.matmul(transformation_matrix_cartesian_to_rtn, Cov_xyz[idx,:,:]),transformation_matrix_cartesian_to_rtn.T)[:3,:3]
+            # TODO only position
+            # TODO 1 json each sat
         
         # Done propagating covariance
         cov_time_end = time.time()
@@ -328,8 +330,8 @@ class BulkTLE:
             start_indx = _i * len(times)
 
             # Propagate over time
-            rTEME_arr = np.array([states_teme[start_indx + _j][0].numpy() for _j in range(len(times))])
-            vTEME_arr = np.array([states_teme[start_indx + _j][1].numpy() for _j in range(len(times))]).T
+            rTEME_arr = np.array([states_teme[start_indx + _j][0].detach().numpy() for _j in range(len(times))])
+            vTEME_arr = np.array([states_teme[start_indx + _j][1].detach().numpy() for _j in range(len(times))]).T
 
 
             # Prepare CartesianDifferential
@@ -374,7 +376,8 @@ class BulkTLE:
                 "latitude_deg": lat_arr.tolist(),
                 "longitude_deg": lon_arr.tolist(),
                 "height_deg": height_arr.tolist(),
-                "covariance_eci": 0.,
+                "covariance_position_rtn": Cov_rtn_pos[start_indx:(start_indx+len(times))].tolist(),
+                "cov_fro_norm": frob_norms_pos[start_indx:(start_indx+len(times))].tolist()
             })
 
         
@@ -385,16 +388,16 @@ class BulkTLE:
         print("Finished in " + str(write_time_end-write_time_start) + " secs")
 
 if __name__ == "__main__":
-    uriBase                = "https://www.space-track.org"
-    requestLogin           = "/ajaxauth/login"
-    requestCmdAction       = "/basicspacedata/query" 
-    requestFindLEOSats     = "/class/gp/EPOCH/>now-30/MEAN_MOTION/>11.25/format/3le"
+    # uriBase                = "https://www.space-track.org"
+    # requestLogin           = "/ajaxauth/login"
+    # requestCmdAction       = "/basicspacedata/query" 
+    # requestFindLEOSats     = "/class/gp/EPOCH/>now-30/MEAN_MOTION/>11.25/format/3le"
 
-    stq = stQueryClass("SLTrack.ini", uriBase + requestLogin, uriBase + requestCmdAction + requestFindLEOSats)
-    fileName = stq.get3LELocal()
+    # stq = stQueryClass("SLTrack.ini", uriBase + requestLogin, uriBase + requestCmdAction + requestFindLEOSats)
+    # fileName = stq.get3LELocal()
 
     bulk = BulkTLE(
-        tle_txt=fileName
+        tle_txt="src/sgp4/tle_test.txt"#"src/get_tles/tleHistories/tleHistory_2025-02-15_16-08-15.txt"
     )
     prop_date1 = datetime(
         year=2025,
