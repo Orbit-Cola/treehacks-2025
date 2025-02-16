@@ -47,9 +47,9 @@ class ConjunctionScreening:
         def update_graph(value):
             """Update graph."""
             # TODO: Make real covariance ellipsoids
-            a = 2  # Semi-axis along x
-            b = 3  # Semi-axis along y
-            c = 4  # Semi-axis along z
+            a = 28.76  # Semi-axis along x
+            b = 83.53  # Semi-axis along y
+            c = 2533  # Semi-axis along z
 
             # Create the grid of points
             u = np.linspace(0, 2 * np.pi, 100)
