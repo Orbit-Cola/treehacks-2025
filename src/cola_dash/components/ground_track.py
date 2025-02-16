@@ -7,7 +7,8 @@ import src.cola_dash.style as style
 
 LAND_COLOR = "#007000"
 WATER_COLOR = "#000070"
-options = list(PROPAGATOR_DICT.keys())
+OPTIONS_DICT = {f"{satcat}: {json_data['name']}": satcat for satcat, json_data in PROPAGATOR_DICT.items()}
+OPTIONS = list(OPTIONS_DICT.keys())
 
 class GroundTrack:
     """Ground Track page view."""
@@ -21,8 +22,8 @@ class GroundTrack:
             html.Div([
                 dcc.Dropdown(
                     id="ground-dropdown",
-                    options=options,
-                    value=options[0] if options else None,
+                    options=OPTIONS,
+                    value=OPTIONS[0] if OPTIONS else None,
                 ),
             ], style=style.DASH_1),
             html.Div([
@@ -47,10 +48,10 @@ class GroundTrack:
         def update_graph(value):
             """Update graph."""
             if value is not None:
-                obj = PROPAGATOR_DICT[value]
+                obj = PROPAGATOR_DICT[OPTIONS_DICT[value]]
                 fig = px.line_geo(
-                    lat=obj["json_data"]["latitude_deg"],
-                    lon=obj["json_data"]["longitude_deg"],
+                    lat=obj["latitude_deg"],
+                    lon=obj["longitude_deg"],
                     template="plotly_dark"
                 )
                 fig.update_geos(

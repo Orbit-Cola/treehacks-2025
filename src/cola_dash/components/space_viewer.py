@@ -18,7 +18,7 @@ EARTH_COLORSCALE = [
     [0.9, "rgb(237,214,183)"],
     [1.0, "rgb(255, 255, 255)"],
 ]
-EARTH_IMAGE = Image.open("./src/assets/earth.jpeg")
+EARTH_IMAGE = Image.open("./src/cola_dash/assets/earth.jpeg")
 EARTH_TEXTURE = np.asarray(EARTH_IMAGE.resize((np.array(EARTH_IMAGE.size) / 4).astype(int), Image.LANCZOS)).T
 
 class SpaceViewer:
@@ -41,10 +41,9 @@ class SpaceViewer:
         )
         self.init_idx = 1
         for obj in PROPAGATOR_DICT.values():
-            name = obj["json_data"]["name"]
-            r_eci = np.array(obj["json_data"]["position_eci_km"])
+            name = obj["name"]
+            r_eci = np.array(obj["position_eci_km"])
             self.fig.add_trace(self.plot_object(name, r_eci[:, 0], r_eci[:, 1], r_eci[:, 2], self.init_idx - 1))
-
         # Create layout
         self.content = html.Div([
             html.H2(
@@ -63,6 +62,12 @@ class SpaceViewer:
                     step=1,
                     value=self.init_idx,
                     id="space-slider",
+                    marks=None,
+                    updatemode="drag",
+                    tooltip={
+                        "always_visible": False,
+                        "style": {"color": "LightSteelBlue", "fontSize": "20px"},
+                    },
                 )
             ], style=style.DASH_1),               
             html.Div([
@@ -95,15 +100,15 @@ class SpaceViewer:
             hoverinfo="none",
         )
     
-    def plot_orbit(self, satcat, x_ecef, y_ecef, z_ecef):
+    def plot_orbit(self, name, x_eci, y_eci, z_eci, color):
         return go.Scatter3d(
-            x=x_ecef,
-            y=y_ecef,
-            z=z_ecef,
+            x=x_eci,
+            y=y_eci,
+            z=z_eci,
             mode="lines",
             marker=dict(size=2),
             line=dict(width=2),
-            name=satcat
+            name=name
         )
 
     def plot_object(self, name, x_eci, y_eci, z_eci, step):
@@ -128,7 +133,7 @@ class SpaceViewer:
 
             p = Patch()
             for idx, obj in enumerate(PROPAGATOR_DICT.values()):
-                r_eci = np.array(obj["json_data"]["position_eci_km"])
+                r_eci = np.array(obj["position_eci_km"])
                 p["data"][idx + 1]['x'] = r_eci[value - 1, 0:1]
                 p["data"][idx + 1]['y'] = r_eci[value - 1, 1:2]
                 p["data"][idx + 1]['z'] = r_eci[value - 1, 2:3]

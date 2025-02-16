@@ -15,8 +15,4 @@ else:
 PROPAGATOR_DICT = {}
 for obj in raw_propagator_data:
     json_data = json.loads(obj[3])
-    PROPAGATOR_DICT[json_data["name"]] = {
-        "satcat": obj[0],
-        # Ignoring altitudes for now
-        "json_data": json_data,
-    }
+    PROPAGATOR_DICT[obj[0]] = json_data
