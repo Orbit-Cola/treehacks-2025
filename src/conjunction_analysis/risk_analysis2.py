@@ -11,9 +11,6 @@ import src.utils.database as db
 from pc_calc import *
 from tolerances import *
 
-
-
-
 class RiskAnalyzer():
     """
     RiskAnalyzer: runs calcs to see what satellites are at risk of colliding
@@ -49,33 +46,17 @@ class RiskAnalyzer():
     def process_jsons(self):
         """
         Operates over a single timestep
-        Operates over a single timestep
-        Operates over a single timestep
         Create 2 datastructures:
-        1) sat_data: list of ints corresponding to satellite json info
-        1) sat_data: list of ints corresponding to satellite json info
         1) sat_data: list of ints corresponding to satellite json info
         """
 
-        # positions = []
-        # positions = []
         # positions = []
         self.sat_data = []
         for data in self.jsons:
             with open(data, "r") as f:
                 big_data = json.load(f)
-                
-                # positions.append(np.array(big_data["position_eci_km"]))
-                
-                # positions.append(np.array(big_data["position_eci_km"]))
-                
-                # positions.append(np.array(big_data["position_eci_km"]))
                 self.sat_data.append(big_data)
 
-        # # convert positions to np.array
-        # self.positions = np.vstack(positions)
-        # # convert positions to np.array
-        # self.positions = np.vstack(positions)
         # # convert positions to np.array
         # self.positions = np.vstack(positions)
 
@@ -206,23 +187,9 @@ class RiskAnalyzer():
                         pos=np.array(sat_data["position_eci_km"][self.ind]),
                         vel=np.array(sat_data["velocity_eci_km_s"][self.ind]),
                         cov_rtn=np.array(sat_data["covariance_position_rtn"][self.ind]))
-                        # size=sat_data["frontal_area_m2"]*1e-3,
-                        size=sat_data["frontal_area_m2"],
-                        pos=np.array(sat_data["position_eci_km"][self.ind]),
-                        vel=np.array(sat_data["velocity_eci_km_s"][self.ind]),
-                        cov_rtn=np.array(sat_data["covariance_position_rtn"][self.ind]))
-                        # size=sat_data["frontal_area_m2"]*1e-3,
-                        size=sat_data["frontal_area_m2"],
-                        pos=np.array(sat_data["position_eci_km"][self.ind]),
-                        vel=np.array(sat_data["velocity_eci_km_s"][self.ind]),
-                        cov_rtn=np.array(sat_data["covariance_position_rtn"][self.ind]))
         
         return sat
-
-    def get_pcs(self, risk_indices, time):
-        risky_cases = []
-    def get_pcs(self, risk_indices, time):
-        risky_cases = []
+    
     def get_pcs(self, risk_indices, time):
         risky_cases = []
         for pair in risk_indices:
@@ -232,44 +199,6 @@ class RiskAnalyzer():
             prob_collision = calcPC(sat1=sat1,
                                     sat2=sat2).Pc
             if prob_collision >= SAFE_PC:
-                # risky_case.append([(sat1.id, sat2.id), time])
-                # risky_Pcs.append(prob_collision)
-                risky_dict = {
-                    "Satellite 1": {
-                        "Satellite catalog number": sat1.id,
-                        "position_eci_km": sat1.pos.tolist(),
-                        "covariance_position_eci": sat1.cov.tolist()
-                        },
-                    "Satellite 2": {
-                        "Satellite catalog number": sat2.id,
-                        "position_eci_km": sat2.pos.tolist(),
-                        "covariance_position_eci": sat2.cov.tolist()
-                        },
-                    "time_utc": time,
-                    "Pc_percentage": prob_collision*100
-                    }
-                risky_cases.append(risky_dict)
-
-        return risky_cases
-                # risky_case.append([(sat1.id, sat2.id), time])
-                # risky_Pcs.append(prob_collision)
-                risky_dict = {
-                    "Satellite 1": {
-                        "Satellite catalog number": sat1.id,
-                        "position_eci_km": sat1.pos.tolist(),
-                        "covariance_position_eci": sat1.cov.tolist()
-                        },
-                    "Satellite 2": {
-                        "Satellite catalog number": sat2.id,
-                        "position_eci_km": sat2.pos.tolist(),
-                        "covariance_position_eci": sat2.cov.tolist()
-                        },
-                    "time_utc": time,
-                    "Pc_percentage": prob_collision*100
-                    }
-                risky_cases.append(risky_dict)
-
-        return risky_cases
                 # risky_case.append([(sat1.id, sat2.id), time])
                 # risky_Pcs.append(prob_collision)
                 risky_dict = {
