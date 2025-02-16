@@ -77,7 +77,7 @@ def delete_conjunction_data(cursor):
     cursor.execute("DELETE FROM conjunctions")  # Delete all old records
 
 def upload_conjunction(cursor, conjunction_data):
-    # Data should be list of tuple(satcat: str, apogee_km: float, perigee_km: float, data: str (serialized JSON))
+    # Data should be list of tuple(satcat1: str, satcat2: str, data: str (serialized JSON))
     insert_conjunctions = "INSERT INTO conjunctions(satcat1, satcat2, data) VALUES(%s, %s, %s)"
     cursor.executemany(insert_conjunctions, conjunction_data)
 

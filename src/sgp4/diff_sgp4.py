@@ -178,35 +178,7 @@ class BulkTLE:
         Cov_rtn_pos=np.zeros((len(tle_batch_list),3,3))
 
         # Initial TLE covariance matrix:
-        Cov_tle=np.array([
-        [   1.06817079e-23,  8.85804989e-25,  1.51328946e-24,
-            -2.48167092e-13,  1.80784129e-11, -9.17516946e-17,
-            -1.80719145e-11,  2.47782854e-14,  1.06374440e-19],
-        [   1.10888880e-26,  9.19571327e-28,  1.57097512e-27,
-            -2.57618033e-16,  1.87675528e-14, -9.28440729e-20,
-            -1.87608028e-14,  2.57219640e-17,  1.10539220e-22],
-        [   -3.62208982e-24, -3.00370060e-25, -5.13145502e-25,
-            8.41515501e-14, -6.13025898e-12,  3.11161104e-17,
-            6.12805538e-12, -8.40212641e-15, -3.61913778e-20],
-        [   -2.72347076e-13, -2.25849762e-14, -3.85837006e-14,
-            6.69613552e-03, -4.60858400e-01,  2.44529381e-06,
-            4.60848714e-01, -6.66633934e-04,  2.73554382e-10],
-        [   1.98398791e-11,  1.64526723e-12,  2.81073778e-12,
-            -4.60858400e-01,  3.35783115e+01, -1.70385711e-04,
-            -3.35662070e+01,  4.60149046e-02,  1.68286334e-07],
-        [   -1.00692291e-16, -8.34937429e-18, -1.42650203e-17,
-            2.44529381e-06, -1.70385711e-04,  1.75093676e-05,
-            1.70379140e-04, -2.42796071e-07, -2.62336921e-10],
-        [   -1.98327475e-11, -1.64467582e-12, -2.80972744e-12,
-            4.60848714e-01, -3.35662070e+01,  1.70379140e-04,
-            3.35541747e+01, -4.60131157e-02, -2.28248504e-07],
-        [   2.71925407e-14,  2.25500097e-15,  3.85239630e-15,
-            -6.66633934e-04,  4.60149046e-02, -2.42796071e-07,
-            -4.60131157e-02,  6.63783423e-05, -3.21657063e-12],
-        [   1.16764843e-19,  9.73507662e-21,  1.65971417e-20,
-            2.73554368e-10,  1.68286335e-07, -2.62336921e-10,
-            -2.28248505e-07, -3.21656925e-12,  2.21029182e-07]
-        ])/1000.
+        Cov_tle=np.identity(9) * 1/np.sqrt(3) # [km]
         frob_norms_pos=np.zeros((len(tle_batch_list),))
 
         dx_dtle = torch.zeros((len(tle_batch_list),6,9))
@@ -214,7 +186,7 @@ class BulkTLE:
             for i in range(6):
                 tle_elements[k].grad=None
                 states_teme[k].flatten()[i].backward(retain_graph=True)
-                dx_dtle[k,i,:] = tle_elements[k].grad
+                dx_dtle[k,i,:] = torch.clamp(tle_elements[k].grad, min=-1.5, max=1.5) # [km/rad]
         
         for idx, tle in enumerate(tle_batch_list):
             state_rtn, cartesian_to_rtn_rotation_matrix = self.from_cartesian_to_rtn(states_teme[idx].detach().numpy())
@@ -305,15 +277,15 @@ class BulkTLE:
         print("Finished in " + str(write_time_end-write_time_start) + " secs")
 
 if __name__ == "__main__":
-    PUSH_TO_DATABASE = True
-    DELTE_DATABASE = False
+    PUSH_TO_DATABASE = False
+    DELETE_DATABASE = False
 
     # Connect to remote database
     conn = database.create_conn()
     cursor = conn.cursor()
 
     # Delete table from database
-    if DELTE_DATABASE:
+    if DELETE_DATABASE:
         database.delete_propagation_data(cursor=cursor)
     
     # Pull TLE data from database and parse
@@ -321,7 +293,7 @@ if __name__ == "__main__":
     tle_str_list = [t[1].split("\n") for t in tle]
 
     # Split up data
-    for _i in range(50,250,10):
+    for _i in range(0,10,10):
         # set tle_list
         if _i == 0:
             tle_list_i = tle_str_list[-(_i+10):] 
@@ -335,7 +307,7 @@ if __name__ == "__main__":
 
         # Set propagation times
         start_time = datetime(year=2025,month=2,day=15,hour=20,minute=0,second=0)
-        datetime_list = [start_time + timedelta(minutes=i) for i in range(0,120,2)]
+        datetime_list = [start_time + timedelta(minutes=i) for i in range(0,120,30)]
 
         # Bulk propagate
         bulk.bulk_propagate(
