@@ -35,12 +35,13 @@ class satellite():
         self.size = size
         self.pos = pos
         self.vel = vel
+        self.cov_rtn = cov_rtn
 
         # Rotation matrix GCRS to RIC
         rot_GCRS2RIC = gcrs2ric(self.pos,self.vel)
 
         # Get covariance matrix in GCRS frame
-        self.cov = rot_GCRS2RIC.T @ cov_rtn @ rot_GCRS2RIC
+        self.cov = rot_GCRS2RIC.T @ self.cov_rtn @ rot_GCRS2RIC
 
 class calcPC():
     def __init__(self, sat1, sat2):

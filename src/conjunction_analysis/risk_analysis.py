@@ -7,8 +7,6 @@ from scipy.spatial import KDTree
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 import src.utils.database as db
 from pc_calc import *
-import src.utils.database as db
-from pc_calc import *
 from tolerances import *
 
 class RiskAnalyzer():
@@ -21,6 +19,7 @@ class RiskAnalyzer():
     """
 
     def __init__(self):
+        self.risky_cases = []
         conn = db.create_conn()
         cursor = conn.cursor()
         self.get_jsons(cursor)
@@ -28,9 +27,11 @@ class RiskAnalyzer():
         self.amongus_json = []
         self.create_jsons()
         db.delete_conjunction_data(cursor=cursor)
-        db.upload_conjunction(cursor=cursor,
-                              conjunction_data=self.amongus_json)
 
+        # Write all conjunctions to database
+        print("Writing " + str(len(self.amongus_json)) + " Conjunction Event(s) to Database")
+        db.upload_conjunction(cursor=cursor,conjunction_data=self.amongus_json)
+        conn.commit()
 
     def get_jsons(self,cursor):
         # Pull propagator data from database and parse
@@ -66,8 +67,8 @@ class RiskAnalyzer():
         num_times = len(self.sat_data[0]["time_utc"])
         
         # TODO: GET T
-        # for i in range(num_times):
-        for i in range(1):
+        for i in range(num_times):
+        # for i in range(1):
 
             # Get position vector
             positions = []
@@ -77,7 +78,7 @@ class RiskAnalyzer():
 
             positions = np.array(positions)
             risk_indices = self.find_close_pairs(positions)
-            self.risky_cases = self.get_pcs(risk_indices, sat["time_utc"][i])
+            self.get_pcs(risk_indices, sat["time_utc"][i])
 
     def create_jsons(self):
         """Create jsons with our data"""
@@ -89,8 +90,8 @@ class RiskAnalyzer():
                 json.dump(risky_case, outfile, indent=4)
             
             self.amongus_json.append((
-                risky_case["Satellite 1"]["Satellite catalog number"],
-                risky_case["Satellite 2"]["Satellite catalog number"],
+                str(risky_case["Satellite 1"]["Satellite catalog number"]),
+                str(risky_case["Satellite 2"]["Satellite catalog number"]),
                 json.dumps(risky_case, indent=4)
             ))
 
@@ -110,7 +111,6 @@ class RiskAnalyzer():
         return sat
     
     def get_pcs(self, risk_indices, time):
-        risky_cases = []
         for pair in risk_indices:
             # TODO: Figure out how to pull data from database here
             sat1 = self.get_sat_object(sat_data=self.sat_data[pair[0]])
@@ -124,18 +124,25 @@ class RiskAnalyzer():
                     "Satellite 1": {
                         "Satellite catalog number": sat1.id,
                         "position_eci_km": sat1.pos.tolist(),
-                        "covariance_position_eci": sat1.cov.tolist()
+                        "covariance_position_eci": sat1.cov.tolist(),
+                        "covariance_rtn": sat1.cov_rtn.tolist(),
                         },
                     "Satellite 2": {
                         "Satellite catalog number": sat2.id,
                         "position_eci_km": sat2.pos.tolist(),
-                        "covariance_position_eci": sat2.cov.tolist()
+                        "position_rtn_km": (gcrs2ric(sat1.pos,sat1.vel)@sat2.pos).tolist(),
+                        "covariance_position_eci": sat2.cov.tolist(),
+                        "covariance_rtn": sat2.cov_rtn.tolist(),
                         },
                     "time_utc": time,
                     "Pc_percentage": prob_collision*100
                     }
-                risky_cases.append(risky_dict)
+                self.risky_cases.append(risky_dict)
+    
+    def fake_jsons():
+        """
+        In leiu of actual covariances, this will generate some fabricated results
+        """
 
-        return risky_cases
     
 risks = RiskAnalyzer()

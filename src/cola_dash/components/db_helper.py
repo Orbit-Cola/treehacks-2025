@@ -19,12 +19,10 @@ for obj in raw_propagator_data:
 
 # Get conjunction data
 raw_conjunction_data = database.get_conjunctions_data(conn.cursor())
-if raw_conjunction_data:
-    json_data = json.loads(raw_conjunction_data[0][2])
-CONJUNCTION_DICT = {}
+CONJUNCTION_LIST = []
 for obj in raw_conjunction_data:
     json_data = json.loads(obj[2])
-    CONJUNCTION_DICT[obj[0]] = json_data
+    CONJUNCTION_LIST.append(json_data)
 
 # Get launches data
 LAUNCHES_DATA = database.get_launches_data(conn.cursor())
