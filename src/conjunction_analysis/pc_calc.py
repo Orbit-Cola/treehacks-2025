@@ -1,6 +1,7 @@
 """
 Implement methods to calculate Pc given two satellites states using the following method:
 https://www.space-track.org/documents/How_the_JSpOC_Calculates_Probability_of_Collision.pdf
+https://stacks.stanford.edu/file/druid:dg552pb6632/Foster-estes-parametric_analysis_of_orbital_debris_collision_probability.pdf
 
 """
 import numpy as np
@@ -42,8 +43,8 @@ class satellite():
         self.cov = rot_GCRS2RIC.T @ cov_rtn @ rot_GCRS2RIC
 
 class calcPC():
-
     def __init__(self, sat1, sat2):
+        # self.Pc = self.get_pc(sat1=sat1, sat2=sat2)
         d, C, r_sp = self.get2DParams(sat1=sat1, sat2=sat2)
         self.Pc = self.integratePC(d, C, r_sp)
 
@@ -60,25 +61,59 @@ class calcPC():
         y_hat = np.cross(x_hat, norm_vector(v_rel))
         z_hat = np.cross(x_hat, y_hat)
 
-        # Construct 3D intertial to conjunction matrix
-        V = np.vstack((x_hat, y_hat, z_hat)).T
-        # TODO: Add check if V is nonsingular
-        R = V @ LA.inv(V)
+        # # Construct 3D intertial to conjunction matrix
+        # V = np.vstack((x_hat, y_hat, z_hat)).T
+        # # TODO: Add check if V is nonsingular
+        # R = V @ LA.inv(V)
 
-        # Convert values to covariance matrix form
-        C3D_conj = R @ C3D
-        eigenvalues, eigenvectors = LA.eig(C3D_conj)
+        # # Convert values to covariance matrix form
+        # C3D_conj = R @ C3D
+        # eigenvalues, eigenvectors = LA.eig(C3D_conj)
 
-        # Project 3D covariance into 2D conjunction plane
-        v1, v2, v3 = [eigenvalues[0]*eigenvectors[:,0], eigenvalues[1]*eigenvectors[:,1], eigenvalues[2]*eigenvectors[:,2]]
-        p1 = self.project_onto_basis(v1)
-        p2 = self.project_onto_basis(v2)
-        p3 = self.project_onto_basis(v3)
-        V, Lambda = self.get_2D_eigenmats(p1, p2, p3)
+        # # Project 3D covariance into 2D conjunction plane
+        # v1, v2, v3 = [eigenvalues[0]*eigenvectors[:,0], eigenvalues[1]*eigenvectors[:,1], eigenvalues[2]*eigenvectors[:,2]]
+        # p1 = self.project_onto_basis(v1)
+        # p2 = self.project_onto_basis(v2)
+        # p3 = self.project_onto_basis(v3)
+        # V, Lambda = self.get_2D_eigenmats(p1, p2, p3)
 
-        C = V @ Lambda @ LA.inv(V)
+        # C = V @ Lambda @ LA.inv(V)
+
+        # P = np.eye(3) - z_hat @ z_hat.T
+        P = np.vstack([x_hat, y_hat]).T
+        C = P.T @ C3D @ P
+        # C = C3D - np.dot(C3D, z_hat) * z_hat
 
         return d, C, r_sp
+
+    # def get_pc(self, sat1, sat2):
+    #     # Get key parameters
+    #     R = sat1.size + sat2.size
+    #     v_r = sat2.vel - sat1.vel
+    #     r_0 = sat2.pos - sat1.pos
+    #     U_hat = norm_vector(np.cross(sat1.vel, sat2.vel))
+    #     V_hat = norm_vector(v_r)
+    #     W_hat = np.cross(U_hat, V_hat)
+    #     theta_r = np.arccos(np.clip(np.dot(sat2.vel, sat1.vel), -1.0, 1.0)) / 2
+    #     t_cpa = -np.dot(r_0, v_r) / np.dot(v_r, v_r)
+
+    #     sigma_u = np.sqrt(sat1.cov[0,0]**2 + sat2.cov[0,0]**2)
+    #     sigma_w = np.sqrt((sat1.cov[1,1]*np.sin(theta_r))**2 +
+    #                       (sat1.cov[2,2]*np.cos(theta_r))**2 +
+    #                       (sat2.cov[1,1]*np.sin(theta_r))**2 +
+    #                       (sat2.cov[2,2]*np.cos(theta_r))**2)
+        
+    #     U_0 = np.dot(r_0, U_hat)
+    #     W_0 = np.dot(r_0, W_hat)
+
+    #     f = lambda r, t: np.exp(-((r*np.cos(t) - W_0)**2) / (2*sigma_w**2)) * np.exp(-((r*np.sin(t) - U_0)**2) / (2*sigma_u**2))
+    #     integ = integrate.dblquad(lambda r, theta: f(r, theta) * r,
+    #                               0, R,
+    #                               lambda theta: 0, lambda theta: 2*np.pi)
+    #     norm = 1 / (2*np.pi*sigma_u*sigma_w)
+    #     return integ[0] * norm
+
+
     
     @staticmethod
     def project_onto_basis(v):
@@ -122,9 +157,7 @@ class calcPC():
         Lambda = np.diag([ra, rp])
         return V, Lambda
 
-
-    @staticmethod
-    def integratePC(d, C, r_sp):
+    def integratePC(self, d, C, r_sp):
         f = lambda x, y: np.exp(-0.5 * ((np.array([x, y]) - r_sp).T @ LA.inv(C) @ (np.array([x, y]) - r_sp)))
         integ = integrate.dblquad(f, -d, d, lambda x: -np.sqrt(d**2 - x**2), lambda x: np.sqrt(d**2 - x**2))
         norm = 1 / (2*np.pi*np.sqrt(LA.det(C)))
