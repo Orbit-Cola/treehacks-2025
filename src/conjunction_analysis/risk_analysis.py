@@ -42,6 +42,8 @@ class RiskAnalyzer():
         for obj in raw_propagator_data:
             json_data = json.loads(obj[3])
             self.sat_data.append(json_data)
+        
+        print("Read in " + str(len(self.sat_data)) + " TLE(s)")
 
     def process_jsons(self):
         """
@@ -102,6 +104,7 @@ class RiskAnalyzer():
     
     def get_sat_object(self, sat_data):
         sat = satellite(id=sat_data["Satellite catalog number"],
+                        name=sat_data["name"],
                         # size=sat_data["frontal_area_m2"]*1e-3,
                         size=sat_data["frontal_area_m2"],
                         pos=np.array(sat_data["position_eci_km"][self.ind]),
@@ -123,14 +126,16 @@ class RiskAnalyzer():
                 risky_dict = {
                     "Satellite 1": {
                         "Satellite catalog number": sat1.id,
+                        "Satellite name": sat1.name,
                         "position_eci_km": sat1.pos.tolist(),
                         "covariance_position_eci": sat1.cov.tolist(),
                         "covariance_rtn": sat1.cov_rtn.tolist(),
                         },
                     "Satellite 2": {
                         "Satellite catalog number": sat2.id,
+                        "Satellite name": sat2.name,
                         "position_eci_km": sat2.pos.tolist(),
-                        "position_rtn_km": (gcrs2ric(sat1.pos,sat1.vel)@sat2.pos).tolist(),
+                        "position_rtn_km": (gcrs2ric(sat1.pos,sat1.vel)@(sat2.pos-sat1.pos)).tolist(),
                         "covariance_position_eci": sat2.cov.tolist(),
                         "covariance_rtn": sat2.cov_rtn.tolist(),
                         },

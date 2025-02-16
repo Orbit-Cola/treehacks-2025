@@ -91,8 +91,8 @@ class BulkTLE:
 
         # json tuple
         self.json_tuple = []
-        self.cd = 1.28 # Flat plate
-        self.m = 5. # [kg]
+        self.cd = 0.47/100 # Sphere
+        self.m = 50. # [kg]
 
     def rotation_matrix(self,state):
         """
@@ -258,7 +258,7 @@ class BulkTLE:
                 "epoch": str(self.tle_epochs[_i]),
                 "alt_max_km": max_height,
                 "alt_min_km": min_height,
-                "frontal_area_m2": (current_tle._bstar.numpy().tolist() / self.cd * self.m), # A = (B* m) / CD
+                "frontal_area_m2": (current_tle._bstar.numpy().tolist() * self.m / self.cd), # A = (B* m) / CD
                 "time_utc": times_str,
                 "position_eci_km": rGCRS_arr.tolist(),
                 "velocity_eci_km_s": vGCRS_arr.tolist(),
@@ -277,8 +277,8 @@ class BulkTLE:
         print("Finished in " + str(write_time_end-write_time_start) + " secs")
 
 if __name__ == "__main__":
-    PUSH_TO_DATABASE = False
-    DELETE_DATABASE = False
+    PUSH_TO_DATABASE = True
+    DELETE_DATABASE = True
 
     # Connect to remote database
     conn = database.create_conn()
@@ -293,7 +293,10 @@ if __name__ == "__main__":
     tle_str_list = [t[1].split("\n") for t in tle]
 
     # Split up data
-    for _i in range(0,10,10):
+    for _i in range(0,1000,10):
+        print("\n********************")
+        print("Set: " + str(_i))
+        print("********************")
         # set tle_list
         if _i == 0:
             tle_list_i = tle_str_list[-(_i+10):] 
@@ -306,8 +309,8 @@ if __name__ == "__main__":
         )
 
         # Set propagation times
-        start_time = datetime(year=2025,month=2,day=15,hour=20,minute=0,second=0)
-        datetime_list = [start_time + timedelta(minutes=i) for i in range(0,120,30)]
+        start_time = datetime(year=2025,month=2,day=16,hour=0,minute=0,second=0)
+        datetime_list = [start_time + timedelta(minutes=i) for i in range(0,180,4)]
 
         # Bulk propagate
         bulk.bulk_propagate(

@@ -30,8 +30,9 @@ def norm_vector(v):
         return v / norm
 
 class satellite():
-    def __init__(self, id, size, pos, vel, cov_rtn):
+    def __init__(self, id, name, size, pos, vel, cov_rtn):
         self.id = id
+        self.name = name
         self.size = size
         self.pos = pos
         self.vel = vel

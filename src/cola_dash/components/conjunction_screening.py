@@ -5,8 +5,8 @@ import plotly.graph_objects as go
 from scipy.spatial.transform import Rotation as R
 from src.cola_dash.components.db_helper import CONJUNCTION_LIST
 OPTIONS_DICT = {
-    f"Sat {CONJUNCTION_LIST[_i]['Satellite 1']['Satellite catalog number']} - "
-    f"Sat {CONJUNCTION_LIST[_i]['Satellite 2']['Satellite catalog number']}": _i
+    f"Sat {CONJUNCTION_LIST[_i]['Satellite 1']['Satellite catalog number']}: {CONJUNCTION_LIST[_i]['Satellite 1']['Satellite name']} - "
+    f"Sat {CONJUNCTION_LIST[_i]['Satellite 2']['Satellite catalog number']}: {CONJUNCTION_LIST[_i]['Satellite 2']['Satellite name']}": _i
     for _i in range(len(CONJUNCTION_LIST))
 }
 OPTIONS = list(OPTIONS_DICT.keys())
@@ -122,7 +122,7 @@ class ConjunctionScreening:
         )
         def update_table(_):
             # Extract headers from the dictionary keys
-            headers = [html.Th("Time (UTC)"),html.Th("Satellite 1 ID"),html.Th("Satellite 2 ID"),html.Th("Pc (%)")]
+            headers = [html.Th("Time (UTC)"),html.Th("Satellite 1"),html.Th("Satellite 2"),html.Th("Pc (%)")]
             thead = html.Thead(html.Tr(headers))
             
             # Check if Conjunction values exist
@@ -133,8 +133,8 @@ class ConjunctionScreening:
             rows = [
                 html.Tr([
                     html.Td(str(CONJUNCTION_LIST[_i]["time_utc"])),
-                    html.Td(str(CONJUNCTION_LIST[_i]["Satellite 1"]["Satellite catalog number"])),
-                    html.Td(str(CONJUNCTION_LIST[_i]["Satellite 2"]["Satellite catalog number"])),
+                    html.Td(str(CONJUNCTION_LIST[_i]["Satellite 1"]["Satellite catalog number"]) + ": " + str(CONJUNCTION_LIST[_i]["Satellite 1"]["Satellite name"])),
+                    html.Td(str(CONJUNCTION_LIST[_i]["Satellite 2"]["Satellite catalog number"]) + ": " + str(CONJUNCTION_LIST[_i]["Satellite 2"]["Satellite name"])),
                     html.Td(str(CONJUNCTION_LIST[_i]["Pc_percentage"]))
                 ])
                 for _i in range(len(CONJUNCTION_LIST))
