@@ -40,8 +40,8 @@ class RiskAnalyzer():
             with open(data, "r") as f:
                 big_data = json.load(f)
 
-                positions.append(np.array(big_data[0]["position_eci_km"]))
-                self.sat_data.append(big_data[0])
+                positions.append(np.array(big_data["position_eci_km"]))
+                self.sat_data.append(big_data)
 
         # convert positions to np.array
         self.positions = np.vstack(positions)
@@ -54,9 +54,9 @@ class RiskAnalyzer():
     def get_sat_object(self, sat_data):
         sat = satellite(id=sat_data["Satellite catalog number"],
                         size=sat_data["frontal_area_m2"]*1e-6,
-                        pos=np.array(sat_data["position_eci_km"][0]),
-                        vel=np.array(sat_data["velocity_eci_km_s"][0]),
-                        cov=np.array(sat_data["covariance_position_rtn"][0]))
+                        pos=np.array(sat_data["position_eci_km"]),
+                        vel=np.array(sat_data["velocity_eci_km_s"]),
+                        cov=np.array(sat_data["covariance_position_rtn"]))
         
         return sat
 

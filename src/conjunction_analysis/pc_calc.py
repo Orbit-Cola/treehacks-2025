@@ -7,6 +7,20 @@ import numpy as np
 import scipy.integrate as integrate
 from numpy import linalg as LA
 
+def gcrs2ric(rGCRS,vGCRS):
+    """
+    Get rotation matrix from GCRS (ECI) frame to RIC frame
+    """
+    # Get RIC from ICRS
+    r_dir = rGCRS / np.linalg.norm(rGCRS)
+    c_dir = np.cross(rGCRS,vGCRS) / np.linalg.norm(np.cross(rGCRS,vGCRS))
+    i_dir = np.cross(c_dir,r_dir)
+
+    # Build rotation matrix
+    rot_GCRS2RIC = np.array([r_dir,i_dir,c_dir])
+
+    return rot_GCRS2RIC
+
 def norm_vector(v):
     norm = LA.norm(v)
     if norm == 0:
@@ -15,12 +29,17 @@ def norm_vector(v):
         return v / norm
 
 class satellite():
-    def __init__(self, id, size, pos, vel, cov):
+    def __init__(self, id, size, pos, vel, cov_rtn):
         self.id = id
         self.size = size
         self.pos = pos
         self.vel = vel
-        self.cov = cov
+
+        # Rotation matrix GCRS to RIC
+        rot_GCRS2RIC = gcrs2ric(self.pos,self.vel)
+
+        # Get covariance matrix in GCRS frame
+        self.cov = rot_GCRS2RIC.T @ cov_rtn @ rot_GCRS2RIC
 
 class calcPC():
 

@@ -303,7 +303,7 @@ class BulkTLE:
         print("Finished in " + str(write_time_end-write_time_start) + " secs")
 
 if __name__ == "__main__":
-    PUSH_TO_DATABASE = True
+    PUSH_TO_DATABASE = False
 
     # Connect to remote database
     conn = database.create_conn()
