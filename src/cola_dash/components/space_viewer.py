@@ -68,7 +68,7 @@ class SpaceViewer:
                     persistence_type='session',
                 )
             ], style=style.DASH_1),
-            html.Button("Start Timelaps", id="toggle-button", n_clicks=0, style={**style.DASH_1, "backgroundColor": "#007BFF", "color": "white"}),
+            html.Button("Start Timelapse", id="toggle-button", n_clicks=0, style={**style.DASH_1, "backgroundColor": "#007BFF", "color": "white"}),
             dcc.Store(id="animation-state", data={"running": False}),  # Store animation state
             dcc.Interval(
                 id="interval-update",
@@ -137,7 +137,7 @@ class SpaceViewer:
         def toggle_animation(n_clicks, state):
             """Toggle animation on/off when the button is clicked."""
             running = not state["running"]  # Toggle state
-            button_text = "Stop Timelaps" if running else "Start Timelaps"
+            button_text = "Stop Timelapse" if running else "Start Timelapse"
             return {"running": running}, not running, button_text  # Update state and button text
 
         @callback(
