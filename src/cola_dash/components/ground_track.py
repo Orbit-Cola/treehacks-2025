@@ -1,6 +1,6 @@
 from dash import dcc, html, Output, Input, callback
 import dash_bootstrap_components as dbc
-import plotly.express as px
+import plotly.graph_objects as go
 
 from src.cola_dash.components.db_helper import PROPAGATOR_DICT
 import src.cola_dash.style as style
@@ -24,6 +24,7 @@ class GroundTrack:
                     id="ground-dropdown",
                     options=OPTIONS,
                     value=OPTIONS[0] if OPTIONS else None,
+                    multi=True,
                 ),
             ], style=style.DASH_1),
             html.Div([
@@ -47,22 +48,30 @@ class GroundTrack:
         )
         def update_graph(value):
             """Update graph."""
-            if value is not None:
-                obj = PROPAGATOR_DICT[OPTIONS_DICT[value]]
-                fig = px.line_geo(
-                    lat=obj["latitude_deg"],
-                    lon=obj["longitude_deg"],
-                    template="plotly_dark"
-                )
-                fig.update_geos(
-                    lakecolor=WATER_COLOR,
-                    landcolor=LAND_COLOR,
-                    oceancolor=WATER_COLOR,
-                    showcountries=True,
-                    showocean=True,
-                )
-                fig.update_traces(line_color="red")
-                fig.update_layout(
-                    margin=dict(l=10, r=10, b=10, t=10, pad=0, autoexpand=True),
-                )
-                return fig
+            fig = go.Figure()
+            if value:
+                if type(value) is str:
+                    value = [value,]
+                for v in value:
+                    obj = PROPAGATOR_DICT[OPTIONS_DICT[v]]
+                    fig.add_trace(
+                        go.Scattergeo(
+                            lat=obj["latitude_deg"],
+                            lon=obj["longitude_deg"],
+                            text=v,
+                            name="",
+                            mode="lines",
+                        )
+                    )
+            fig.update_layout(template="plotly_dark")
+            fig.update_geos(
+                lakecolor=WATER_COLOR,
+                landcolor=LAND_COLOR,
+                oceancolor=WATER_COLOR,
+                showcountries=True,
+                showocean=True,
+            )
+            fig.update_layout(
+                margin=dict(l=10, r=10, b=10, t=10, pad=0, autoexpand=True),
+            )
+            return fig
