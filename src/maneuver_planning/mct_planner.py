@@ -1,18 +1,16 @@
-import numpy as np
-
 class State:
     def __init__(
-            time,
-            x_c,
-            x_d,
-            Sig_c,
-            Sig_d,
-            r_c, 
-            r_d
-            ):
-        
+        time,
+        x_c,
+        x_d,
+        Sig_c,
+        Sig_d,
+        r_c, 
+        r_d
+    ):
+        """"""
 
-class mctPlanner:
+class MCTPlanner:
     def __init__(
         self,
         state_initial,  # initial state

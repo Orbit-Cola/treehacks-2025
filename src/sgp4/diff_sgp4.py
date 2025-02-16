@@ -315,7 +315,7 @@ if __name__ == "__main__":
         # Bulk propagate
         bulk.bulk_propagate(
             times=datetime_list,
-            json_dir="src/sgp4/sqp4_json"
+            json_dir="src/sgp4/sgp4_json"
         )
 
         # If you want to push the propagated data to the database
