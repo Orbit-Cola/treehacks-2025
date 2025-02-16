@@ -25,4 +25,6 @@ CONJUNCTION_DICT = {}
 for obj in raw_conjunction_data:
     json_data = json.loads(obj[2])
     CONJUNCTION_DICT[obj[0]] = json_data
-    
+
+# Get launches data
+LAUNCHES_DATA = database.get_launches_data(conn.cursor())

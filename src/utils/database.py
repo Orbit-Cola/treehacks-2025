@@ -52,6 +52,18 @@ def upload_keplerian_data(cursor, keplerian_data):
     insert_keplerian = "INSERT INTO keplerian(satcat, sma, ecc, inc, raan, om, stamp) VALUES(%s, %s, %s, %s, %s, %s, %s)"
     cursor.executemany(insert_keplerian, keplerian_data)
 
+def delete_conjunction_data(cursor):
+    cursor.execute("DELETE FROM conjunctions")  # Delete all old records
+
+def upload_conjunction(cursor, conjunction_data):
+    insert_conjunctions = "INSERT INTO conjunctions(satcat1, satcat2, data) VALUES(%s, %s, %s)"
+    cursor.executemany(insert_conjunctions, conjunction_data)
+
+def upload_launches(cursor, launches_data):
+    cursor.execute("DELETE FROM launches")  # Delete all old records
+    insert_launches = "INSERT INTO launches(name, net, window_end, window_start, lsp, rocket) VALUES(%s, %s, %s, %s, %s, %s)"
+    cursor.executemany(insert_launches, launches_data)
+
 def get_tle_data(cursor):
     # Data should be list of tuple(satcat: str, tle: str)
     select_tle = "SELECT * FROM tle"
@@ -73,15 +85,12 @@ def get_keplerian_data(cursor, limit=1000):
     cursor.execute(select_keplerian)
     return cursor.fetchall()
 
-def delete_conjunction_data(cursor):
-    cursor.execute("DELETE FROM conjunctions")  # Delete all old records
-
-def upload_conjunction(cursor, conjunction_data):
-    # Data should be list of tuple(satcat: str, apogee_km: float, perigee_km: float, data: str (serialized JSON))
-    insert_conjunctions = "INSERT INTO conjunctions(satcat1, satcat2, data) VALUES(%s, %s, %s)"
-    cursor.executemany(insert_conjunctions, conjunction_data)
-
 def get_conjunctions_data(cursor):
     select_conjunctions = "SELECT * FROM conjunctions"
     cursor.execute(select_conjunctions)
+    return cursor.fetchall()
+
+def get_launches_data(cursor):
+    select_launches = "SELECT * FROM launches"
+    cursor.execute(select_launches)
     return cursor.fetchall()
