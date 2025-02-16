@@ -9,9 +9,9 @@ conn = database.create_conn()
 raw_propagator_data = database.get_propagation_data(conn.cursor())
 if raw_propagator_data:
     json_data = json.loads(raw_propagator_data[0][3])
-    PROPAGATOR_TIMESTEPS = len(json_data["position_eci_km"])
+    PROPAGATOR_TIMESTEPS = json_data["time_utc"]
 else:
-    PROPAGATOR_TIMESTEPS = 0
+    PROPAGATOR_TIMESTEPS = []
 PROPAGATOR_DICT = {}
 for obj in raw_propagator_data:
     json_data = json.loads(obj[3])

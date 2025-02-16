@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from src.cola_dash.components.db_helper import PROPAGATOR_DICT, PROPAGATOR_TIMESTEPS
 import src.cola_dash.style as style
 
+# From https://community.plotly.com/t/applying-full-color-image-texture-to-create-an-interactive-earth-globe/60166
 EARTH_COLORSCALE = [
     [0.0, "rgb(30, 59, 117)"],
     [0.1, "rgb(46, 68, 21)"],
@@ -39,11 +40,11 @@ class SpaceViewer:
                 zaxis=dict(showgrid=False, showticklabels=False, visible=False),
             ),
         )
-        self.init_idx = 1
+        self.init_idx = 0
         for obj in PROPAGATOR_DICT.values():
             name = obj["name"]
             r_eci = np.array(obj["position_eci_km"])
-            self.fig.add_trace(self.plot_object(name, r_eci[:, 0], r_eci[:, 1], r_eci[:, 2], self.init_idx - 1))
+            self.fig.add_trace(self.plot_object(name, r_eci[:, 0], r_eci[:, 1], r_eci[:, 2], self.init_idx))
         # Create layout
         self.content = html.Div([
             html.H2(
@@ -51,23 +52,20 @@ class SpaceViewer:
                 style=style.HEADING_2,
             ),
             html.Div([
-                # dcc.Dropdown(
-                #     id="space-dropdown",
-                #     options=["Satellite", "Rocket Body"],
-                #     multi=True,
-                # ),
                 dcc.Slider(
-                    min=1,
-                    max=PROPAGATOR_TIMESTEPS,
+                    min=0,
+                    max=len(PROPAGATOR_TIMESTEPS) - 1,
                     step=1,
                     value=self.init_idx,
                     id="space-slider",
-                    marks=None,
-                    updatemode="drag",
-                    tooltip={
-                        "always_visible": False,
-                        "style": {"color": "LightSteelBlue", "fontSize": "20px"},
+                    marks={
+                        i: {"label": t, "style": {"font-size": 10}}
+                        for i, t in enumerate(PROPAGATOR_TIMESTEPS)
+                        if t[-5:-3] == "00" or t[-5:-3] == "30" or (t[-4] == "0" and len(PROPAGATOR_TIMESTEPS) <= 60)
                     },
+                    updatemode="drag",
+                    persistence=True,
+                    persistence_type='session',
                 )
             ], style=style.DASH_1),               
             html.Div([
@@ -126,7 +124,6 @@ class SpaceViewer:
         @callback(
             Output("space-viewer", "figure"),
             Input("space-slider", "value"),
-            prevent_initial_call=True,
         )
         def update_graph(value):
             """Create and update space viewer visualization."""

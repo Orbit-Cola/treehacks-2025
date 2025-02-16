@@ -23,8 +23,10 @@ class GroundTrack:
                 dcc.Dropdown(
                     id="ground-dropdown",
                     options=OPTIONS,
-                    value=OPTIONS[0] if OPTIONS else None,
+                    value=None,
                     multi=True,
+                    persistence=True,
+                    persistence_type="session",
                 ),
             ], style=style.DASH_1),
             html.Div([
@@ -48,7 +50,7 @@ class GroundTrack:
         )
         def update_graph(value):
             """Update graph."""
-            fig = go.Figure()
+            fig = go.Figure(data=[go.Scattergeo()])
             if value:
                 if type(value) is str:
                     value = [value,]
@@ -58,8 +60,8 @@ class GroundTrack:
                         go.Scattergeo(
                             lat=obj["latitude_deg"],
                             lon=obj["longitude_deg"],
-                            text=v,
-                            name="",
+                            text=obj["time_utc"],
+                            name=v,
                             mode="lines",
                         )
                     )
