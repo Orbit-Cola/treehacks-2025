@@ -39,9 +39,11 @@ def upload_tle_upload_timestamp(cursor, stamp):
     insert_timestamp = "INSERT INTO tle_upload(stamp) VALUES(%s)"
     cursor.execute(insert_timestamp, stamp)
 
+def delete_propagation_data(cursor):
+    cursor.execute("DELETE FROM propagation")  # Delete all old records
+
 def upload_propagation_data(cursor, propagation_data):
     # Data should be list of tuple(satcat: str, apogee_km: float, perigee_km: float, data: str (serialized JSON))
-    cursor.execute("DELETE FROM propagation")  # Delete all old records
     insert_propagation = "INSERT INTO propagation(satcat, apogee_km, perigee_km, data) VALUES(%s, %s, %s, %s)"
     cursor.executemany(insert_propagation, propagation_data)
 
