@@ -31,15 +31,17 @@ def create_conn():
 
 def upload_tle_data(cursor, tle_data):
     # Data should be list of tuple(satcat: str, tle: str)
+    cursor.execute("DELETE FROM tle")  # Delete all old records
     insert_tle = "INSERT INTO tle(satcat, tle) VALUES(%s, %s)"
-    cursor.execute(insert_tle, tle_data)
+    cursor.executemany(insert_tle, tle_data)
 
-def upload_tle_upload_timestamp(cursor, timestamp):
-    insert_timestamp = f"INSERT INTO tle_upload(timestamp) VALUES({timestamp})"
-    cursor.execute(insert_timestamp)
+def upload_tle_upload_timestamp(cursor, stamp):
+    insert_timestamp = "INSERT INTO tle_upload(stamp) VALUES(%s)"
+    cursor.execute(insert_timestamp, stamp)
 
 def upload_propagation_data(cursor, propagation_data):
     # Data should be list of tuple(satcat: str, apogee_km: float, perigee_km: float, data: str (serialized JSON))
+    cursor.execute("DELETE FROM propagation")  # Delete all old records
     insert_propagation = "INSERT INTO propagation(satcat, apogee_km, perigee_km, data) VALUES(%s, %f, %f, %s)"
     cursor.execute(insert_propagation, propagation_data)
 
@@ -50,7 +52,7 @@ def get_tle_data(cursor):
     return cursor.fetchall()
 
 def get_latest_tle_upload_timestamp(cursor):
-    select_timestamp = "SELECT * FROM tle_upload ORDER BY timestamp DESC LIMIT 1"
+    select_timestamp = "SELECT * FROM tle_upload ORDER BY stamp DESC LIMIT 1"
     cursor.execute(select_timestamp)
     return cursor.fetchall()
 

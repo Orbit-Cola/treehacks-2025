@@ -9,8 +9,6 @@ dependencies:
   - pip
   - scipy
   - requests
-  - glob
-  - os
   - pip:
       - astropy
       - dash
@@ -18,4 +16,3 @@ dependencies:
       - mysql-connector-python
       - sgp4
       - sshtunnel
-      - configsparser

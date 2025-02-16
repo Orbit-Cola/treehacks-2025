@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 import glob
 import os
-from src.utils import database as db
+from src.utils import database
 from src.utils import credentials as cred
 
 # GM = 398600441800000.0
@@ -36,10 +36,7 @@ class stQueryClass():
         self.latestELSET = None
         self.parseConfigFile()
 
-        onn = database.create_conn()
-        cursor = conn.cursor()
-        tle = database.get_tle_data(cursor)
-        tle: list(tuple(satcat: str, tle: str))
+        self.conn = database.create_conn()
 
     def parseConfigFile(self):
         configUsr = cred.USERNAME_ST
@@ -66,7 +63,7 @@ class stQueryClass():
                 raise MyError(resp, "POST fail on login")
 
             # this query picks up all Starlink satellites from the catalog. Note - a 401 failure shows you have bad credentials 
-            resp = session.get(self.queryURL)
+            # resp = session.get(self.queryURL)
             if resp.status_code != 200:
                 print(resp)
                 raise MyError(resp, "GET fail on request for LEO satellites")
@@ -79,15 +76,37 @@ class stQueryClass():
         now = datetime.now()
         db_time = 0
 
-        if (now - db_time).total_seconds() < self.QUERY_COOLDOWN:
-            print("Recent db data exists. Skipping query.")
-        else:
+        cursor = self.conn.cursor()
+        db_timeList = database.get_latest_tle_upload_timestamp(cursor)
+        print(db_timeList)
+
+        if not db_timeList or (now - db_timeList[0][0]).total_seconds() > self.QUERY_COOLDOWN:
             print("Cooldown has passed. Writing queried data to db")
-            tleStr = self.querySpaceTrack()
-            # self.latestELSET = tleStr
+            test = True
+            if test:
+                file_pattern = self.configOut + "_*.txt"
+                files = glob.glob(os.path.join(self.outputPath, file_pattern))
+                if files:
+                    latest_file = max(files, key=os.path.getctime) # Get most recently created file
+                    latest_file_base = os.path.basename(latest_file)
+                    print(f"Latest file found: {latest_file_base}")
+
+                    # Extract timestamp from filename
+                    tleStr = self.readELSETFile(latest_file)
+            else:
+                tleStr = self.querySpaceTrack()
 
             strList = tleStr.splitlines()
-            dbList = [ (strList[i], "\n".join(strList[i:i+3])) for i in range(0, len(strList) - 3, 3) ]
+            print(strList[len(strList) - 3 - 1])
+            dbList = [ (strList[i+1].split()[1], "\n".join(strList[i:i+3])) for i in range(0, len(strList) - 3, 3) ]
+            print(dbList[-1])
+
+            database.upload_tle_data(cursor, dbList)
+            database.upload_tle_upload_timestamp(cursor, (now.strftime("%Y-%m-%d %H:%M:%S"),))
+
+            self.conn.commit()
+        else:
+            print("Recent db data exists. Skipping query.")
 
 
     def get3LELocal(self):
