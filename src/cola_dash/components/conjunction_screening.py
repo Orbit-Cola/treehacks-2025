@@ -4,7 +4,7 @@ import numpy as np
 import plotly.graph_objects as go
 from scipy.spatial.transform import Rotation as R
 
-import cola_dash.style as style
+import src.cola_dash.style as style
 
 class ConjunctionScreening:
     """Conjunction Screening page view."""

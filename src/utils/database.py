@@ -1,7 +1,7 @@
 import mysql.connector
 import sshtunnel
 
-from credentials import *
+from src.utils.credentials import *
 
 ########
 # HOW-TO:

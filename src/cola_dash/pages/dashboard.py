@@ -2,10 +2,10 @@ import dash
 from dash import html, Output, Input, callback
 import dash_bootstrap_components as dbc
 
-from cola_dash.components.conjunction_screening import ConjunctionScreening
-from cola_dash.components.ground_track import GroundTrack
-from cola_dash.components.space_viewer import SpaceViewer
-import cola_dash.style as style
+from src.cola_dash.components.conjunction_screening import ConjunctionScreening
+from src.cola_dash.components.ground_track import GroundTrack
+from src.cola_dash.components.space_viewer import SpaceViewer
+import src.cola_dash.style as style
 
 dash.register_page(__name__)
 

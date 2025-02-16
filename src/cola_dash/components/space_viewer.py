@@ -4,8 +4,8 @@ import numpy as np
 from PIL import Image
 import plotly.graph_objects as go
 
-import cola_dash.style as style
-import utils.orbits as orbits
+import src.cola_dash.style as style
+import src.utils.orbits as orbits
 
 EARTH_COLORSCALE = [
     [0.0, "rgb(30, 59, 117)"],

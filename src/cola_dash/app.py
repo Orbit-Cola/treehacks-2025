@@ -1,14 +1,17 @@
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+
 import dash
 from dash import Dash, html
 import dash_bootstrap_components as dbc
 
-import cola_dash.style as style
+import src.cola_dash.style as style
 
 app = Dash(
     __name__,
     external_stylesheets=[dbc.themes.VAPOR],
     use_pages=True,
-    pages_folder="cola_dash/pages",
     suppress_callback_exceptions=True
 )
 
