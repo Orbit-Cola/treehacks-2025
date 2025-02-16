@@ -15,6 +15,8 @@ import torch
 torch.set_default_dtype(torch.float32)
 import time
 # from src.get_tles.stQueryClass import stQueryClass
+import src.utils.database as database
+
 
 # class SatelliteCovariance():
 #     """
@@ -115,7 +117,7 @@ class BulkTLE:
     """
     Class to bulk propagate TLE data
     """
-    def __init__(self,tle_txt:str):
+    def __init__(self,tle_str_list:list):
         """
         BulkTLE class constructor function
 
@@ -131,7 +133,7 @@ class BulkTLE:
 
         # Open text file and record all TLEs
         self.tle_list = []
-        tle_list_init=dsgp4.tle.load(tle_txt)
+        tle_list_init=dsgp4.tle.load_from_lines(tle_str_list)
 
         # Get rid of deepspace TLEs
         for _tle in tle_list_init:
@@ -218,7 +220,7 @@ class BulkTLE:
         v_rtn = np.dot(cartesian_to_rtn_rotation_matrix, v)
         return np.stack([r_rtn, v_rtn]), cartesian_to_rtn_rotation_matrix
     
-    def bulk_propagate(self,times:list,prop_json:str):
+    def bulk_propagate(self,times:list,json_dir:str):
         """
         Bulk propagate the self.tle_list of TLEs over the list of input times
 
@@ -226,13 +228,19 @@ class BulkTLE:
         ----------
         times: list
             List of desired datetimes as datetime
-        prop_json: str
+        json_dir: str
             The file to store propagated data as json
         """
+        # Make json directory
+        if not os.path.exists(json_dir):
+            os.makedirs(json_dir)
+
         # Prepare a local list for bulk propagation
         tle_batch_list = []
         for _tle in self.tle_list:
             tle_batch_list+=[_tle]*len(times)
+
+        print(tle_batch_list)
         
         # Get timestamps in terms of time since epoch
         tsinces = []
@@ -314,9 +322,8 @@ class BulkTLE:
         print("Finished in " + str(cov_time_end-cov_time_start) + " secs")
         
         # Create a list to save all propagated data
-        print("\nWriting outputs to " + str(prop_json) + "...")
+        print("\nWriting outputs to " + str(json_dir) + "...")
         write_time_start = time.time()
-        bulk_prop = []
 
         # Precompute times for conversion
         times_str = [str(t) for t in times]
@@ -324,6 +331,7 @@ class BulkTLE:
         # Run through all satellites
         for _i in range(len(self.tle_list)):
             # Current TLE
+            bulk_prop = []
             current_tle = self.tle_list[_i]
 
             # Get starting index for state vectors
@@ -380,12 +388,11 @@ class BulkTLE:
                 "cov_fro_norm": frob_norms_pos[start_indx:(start_indx+len(times))].tolist()
             })
 
-        
-        # Save to json
-        with open(prop_json, "w") as json_file:
-            json.dump(bulk_prop, json_file, indent=4)
-        write_time_end = time.time()
-        print("Finished in " + str(write_time_end-write_time_start) + " secs")
+            # Save to json
+            with open(json_dir + "/" + str(current_tle.satellite_catalog_number) + ".json", "w") as json_file:
+                json.dump(bulk_prop, json_file, indent=4)
+            write_time_end = time.time()
+            print("Finished in " + str(write_time_end-write_time_start) + " secs")
 
 if __name__ == "__main__":
     # uriBase                = "https://www.space-track.org"
@@ -396,8 +403,17 @@ if __name__ == "__main__":
     # stq = stQueryClass("SLTrack.ini", uriBase + requestLogin, uriBase + requestCmdAction + requestFindLEOSats)
     # fileName = stq.get3LELocal()
 
+    # Connect to remote database
+    conn = database.create_conn()
+    cursor = conn.cursor()
+
+    # Pull TLE data from database
+    tle = database.get_tle_data(cursor)
+    tle_str_list = [t[1] for t in tle]
+    print(tle_str_list)
+
     bulk = BulkTLE(
-        tle_txt="src/sgp4/tle_test.txt"#"src/get_tles/tleHistories/tleHistory_2025-02-15_16-08-15.txt"
+        tle_str_list=tle_str_list#"src/get_tles/tleHistories/tleHistory_2025-02-15_16-08-15.txt"
     )
     prop_date1 = datetime(
         year=2025,
@@ -409,5 +425,5 @@ if __name__ == "__main__":
     )
     bulk.bulk_propagate(
         times=[prop_date1],
-        prop_json="src/sgp4/sqp4_test.json"
+        json_dir="src/sgp4/sqp4_json"
     )
