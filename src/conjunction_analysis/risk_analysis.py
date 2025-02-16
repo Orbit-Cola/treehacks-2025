@@ -21,27 +21,26 @@ class RiskAnalyzer():
     """
 
     def __init__(self):
-        self.get_jsons()
-        self.process_jsons()
+        conn = db.create_conn()
+        cursor = conn.cursor()
+        self.get_jsons(cursor)
         self.collision_checker()
         self.amongus_json = []
         self.create_jsons()
-        conn = db.create_conn()
-        cursor = conn.cursor
         db.delete_conjunction_data(cursor=cursor)
         db.upload_conjunction(cursor=cursor,
                               conjunction_data=self.amongus_json)
-        self.collision_checker()
-        self.amongus_json = []
-        self.create_jsons()
-        db.upload_conjunction()
 
 
-    def get_jsons(self):
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        src_dir = os.path.dirname(script_dir)
-        json_dir = os.path.join(src_dir, "sgp4", "sqp4_json")
-        self.jsons = [os.path.join(json_dir, f) for f in os.listdir(json_dir) if f.endswith(".json")]
+    def get_jsons(self,cursor):
+        # Pull propagator data from database and parse
+        raw_propagator_data = db.get_propagation_data(cursor)
+        self.sat_data = []
+
+        # Read in data from database
+        for obj in raw_propagator_data:
+            json_data = json.loads(obj[3])
+            self.sat_data.append(json_data)
 
     def process_jsons(self):
         """
@@ -94,86 +93,6 @@ class RiskAnalyzer():
                 risky_case["Satellite 2"]["Satellite catalog number"],
                 json.dumps(risky_case, indent=4)
             ))
-
-            
-
-    def find_close_pairs(self, positions):
-        tree = KDTree(positions)
-    def collision_checker(self):
-        """
-        Conduct junction analysis across multiple every available time steps
-        """
-        num_times = len(self.sat_data[0]["time_utc"])
-        
-        # TODO: GET T
-        # for i in range(num_times):
-        for i in range(1):
-
-            # Get position vector
-            positions = []
-            self.ind = i
-            for sat in self.sat_data:
-                positions.append(sat["position_eci_km"][i])
-
-            positions = np.array(positions)
-            risk_indices = self.find_close_pairs(positions)
-            self.risky_cases = self.get_pcs(risk_indices, sat["time_utc"][i])
-
-    def create_jsons(self):
-        """Create jsons with our data"""
-        for risky_case in self.risky_cases:
-            file_name = str(risky_case["Satellite 1"]["Satellite catalog number"]) + "_" + str(risky_case["Satellite 2"]["Satellite catalog number"]) + "" + risky_case["time_utc"].replace(":", "").replace(" ", "_").replace("-","_")
-            file_full_name = os.path.join("src/conjunction_analysis/conjunction_data/", file_name+".json")
-
-            with open(file_full_name, "w") as outfile:
-                json.dump(risky_case, outfile, indent=4)
-            
-            self.amongus_json.append((
-                risky_case["Satellite 1"]["Satellite catalog number"],
-                risky_case["Satellite 2"]["Satellite catalog number"],
-                json.dumps(risky_case, indent=4)
-            ))
-
-            
-
-    def find_close_pairs(self, positions):
-        tree = KDTree(positions)
-    def collision_checker(self):
-        """
-        Conduct junction analysis across multiple every available time steps
-        """
-        num_times = len(self.sat_data[0]["time_utc"])
-        
-        # TODO: GET T
-        # for i in range(num_times):
-        for i in range(1):
-
-            # Get position vector
-            positions = []
-            self.ind = i
-            for sat in self.sat_data:
-                positions.append(sat["position_eci_km"][i])
-
-            positions = np.array(positions)
-            risk_indices = self.find_close_pairs(positions)
-            self.risky_cases = self.get_pcs(risk_indices, sat["time_utc"][i])
-
-    def create_jsons(self):
-        """Create jsons with our data"""
-        for risky_case in self.risky_cases:
-            file_name = str(risky_case["Satellite 1"]["Satellite catalog number"]) + "_" + str(risky_case["Satellite 2"]["Satellite catalog number"]) + "" + risky_case["time_utc"].replace(":", "").replace(" ", "_").replace("-","_")
-            file_full_name = os.path.join("src/conjunction_analysis/conjunction_data/", file_name+".json")
-
-            with open(file_full_name, "w") as outfile:
-                json.dump(risky_case, outfile, indent=4)
-            
-            self.amongus_json.append((
-                risky_case["Satellite 1"]["Satellite catalog number"],
-                risky_case["Satellite 2"]["Satellite catalog number"],
-                json.dumps(risky_case, indent=4)
-            ))
-
-            
 
     def find_close_pairs(self, positions):
         tree = KDTree(positions)
