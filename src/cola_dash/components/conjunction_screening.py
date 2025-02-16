@@ -28,6 +28,11 @@ class ConjunctionScreening:
                     ),
                 ]),
             ], style=style.DASH_1),
+            html.Div([
+                dbc.Table(
+                    id="conjunction-table",
+                    ),
+            ], style=style.DASH_1),
         ])
 
         # Register callbacks on initialization
