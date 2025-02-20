@@ -91,7 +91,7 @@ class BulkTLE:
 
         # json tuple
         self.json_tuple = []
-        self.cd = 0.47/100 # Sphere
+        self.cd = 0.47 # Sphere
         self.m = 50. # [kg]
 
     def rotation_matrix(self,state):
