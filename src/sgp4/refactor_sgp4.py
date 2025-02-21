@@ -94,18 +94,26 @@ class BulkTLE:
         # TODO
     
     @staticmethod
-    def pull_tle_from_database(verbose=False):
+    def build_from_database(verbose=False):
         """
-        Build a BulkTLE class using a text file
+        Build a BulkTLE class using TLEs from the database
 
         Parameters
         ----------
-        tle_txt: str
-            The address of the text file containing many TLEs
         verbose: boolean
             If True, prints debugging messages
         """
-        # TODO
+        # Connect to remote database
+        conn = database.create_conn()
+        cursor = conn.cursor()
+
+        # Pull TLE data from database and parse
+        tle_database_str = database.get_tle_data(cursor)
+
+        return BulkTLE(
+            tle_database_str=tle_database_str,
+            verbose=verbose
+        )
 
     def _print(
             self, 
@@ -206,7 +214,7 @@ class BulkTLE:
         v_rtn = np.dot(cartesian_to_rtn_rotation_matrix, v)
         return np.stack([r_rtn, v_rtn]), cartesian_to_rtn_rotation_matrix
     
-    def bulk_propagate(self,times:list,local_dir=""):
+    def bulk_propagate_sgp4(self,times:list,local_dir=""):
         """
         Bulk propagate the self.tles of TLEs over the list of input times
 
@@ -391,42 +399,25 @@ if __name__ == "__main__":
     PUSH_TO_DATABASE = False
     DELETE_DATABASE = False
 
-    # Connect to remote database
-    conn = database.create_conn()
-    cursor = conn.cursor()
+    # Get TLE data from database
+    bulk_tles = BulkTLE.build_from_database(
+        verbose=True
+    )
 
     # Delete table from database
     if DELETE_DATABASE:
-        database.delete_propagation_data(cursor=cursor)
-    
-    # Pull TLE data from database and parse
-    database_tles = database.get_tle_data(cursor)
-
-    # Bulk import TLEs
-    bulk = BulkTLE(
-        tle_database_str=database_tles,
-        verbose=True
-    )
+        bulk_tles.clear_database()
 
     # Set propagation times
     start_time = datetime(year=2025,month=2,day=16,hour=0,minute=0,second=0)
     datetime_list = [start_time + timedelta(minutes=i) for i in range(0,180,4)]
 
     # Bulk propagate
-    bulk.bulk_propagate(
+    bulk_tles.bulk_propagate_sgp4(
         times=datetime_list,
         json_dir="src/sgp4/sgp4_json"
     )
 
     # If you want to push the propagated data to the database
     if PUSH_TO_DATABASE:
-        print("\nPushing Propagated Data to Database")
-
-        # Upload data
-        database.upload_propagation_data(
-            cursor=cursor,
-            propagation_data=bulk.json_tuple
-        )
-
-        # Commit
-        conn.commit()
+        bulk_tles.push_to_database()
